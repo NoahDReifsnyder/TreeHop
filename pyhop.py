@@ -109,12 +109,15 @@ class Action():
         self.effects=[]
         self.precond={}
         self.state=state
-
+counter=0
 class State():
     """A state is just a collection of variable bindings."""
     """NEED TO BE ALL DICTIONARIES"""
     def __init__(self,name):
+        global counter
         self.__name__ = name
+        self._num=counter
+        counter+=1
     def get_diff(self,otherState):
         diff={}
         def addDiff(attr,var,val):
@@ -137,6 +140,14 @@ class State():
                 if var not in getattr(otherState,attr) or getattr(otherState,attr)[var]!=val:
                     return False
         return True
+    def __hash__(self):
+        return self._num
+    def __copy__(self):
+        global counter
+        newstate=copy.deepcopy(self)
+        newstate._num=counter
+        counter+=1
+        return newstate
 
 class Goal():
     """A goal is just a collection of variable bindings."""
@@ -241,7 +252,7 @@ def print_methods(mlist=methods):
 
 edges=[]
 verticies=[]
-
+Policy={}
 def pyhopT(state,tasks,depth=0):
     if depth>=10:
         return False,None
@@ -271,7 +282,7 @@ def seek_plan(state,tasks,depth=0,prev_action=None):
     if task1[0] in operators:
         verticies.append(state)
         operator = operators[task1[0]]
-        opreturn= operator(copy.deepcopy(state),*task1[1:])
+        opreturn= operator(copy.copy(state),*task1[1:])
         newstates=opreturn[0]
         newstate=newstates[0]
         if len(newstates)>1:

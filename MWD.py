@@ -36,7 +36,7 @@ def move_forward(state, agent, test=0):
     prev=state.fuel[agent]
     eff=Geff
     state.fuel[agent]=(prev[0]-eff[1],prev[1]-eff[0])
-    state1=copy.deepcopy(state)
+    state1=copy.copy(state)
     if (test==0):
         alt=move_backward(state1,agent,1)
     else:
@@ -59,7 +59,7 @@ def move_backward(state, agent, test=0):
     prev=state.fuel[agent]
     eff=Geff
     state.fuel[agent]=(prev[0]-eff[1],prev[1]-eff[0])
-    state1=copy.deepcopy(state)
+    state1=copy.copy(state)
     if (test == 0):
         alt=move_forward(state1,agent,1)
     else:
@@ -82,7 +82,7 @@ def move_up(state, agent, test=0):
     prev=state.fuel[agent]
     eff=Geff
     state.fuel[agent]=(prev[0]-eff[1],prev[1]-eff[0])
-    state1=copy.deepcopy(state)
+    state1=copy.copy(state)
     if (test==0):
         alt=move_backward(state1,agent,1)
     else:
@@ -105,7 +105,7 @@ def move_down(state, agent, test=0):
     prev=state.fuel[agent]
     eff=Geff
     state.fuel[agent]=(prev[0]-eff[1],prev[1]-eff[0])
-    state1=copy.deepcopy(state)
+    state1=copy.copy(state)
     if (test==0):
         alt=move_forward(state1,agent,1)
     else:
@@ -138,31 +138,31 @@ def achieve_goal(state, agent, end, n, tFlag=0):
     start=state.agent[agent]
     if not state.clear[start]:
         return [('unstuck',agent)]#,('achieve_goal',agent, end, n)]
-    test=copy.deepcopy(state)
+    test=copy.copy(state)
     if start==end:
         return []
-    state1=copy.deepcopy(state)
+    state1=copy.copy(state)
     up=move_up(state1,agent)
     if up:
         up=up[0][0].agent[agent]
         up=find_cost(up,end,n)
     else:
         up=n**2
-    state1=copy.deepcopy(state)
+    state1=copy.copy(state)
     down=move_down(state1,agent)
     if down:
         down=down[0][0].agent[agent]
         down=find_cost(down,end,n)
     else:
         down=n**2
-    state1=copy.deepcopy(state)
+    state1=copy.copy(state)
     backward=move_backward(state1,agent)
     if backward:
         backward=backward[0][0].agent[agent]
         backward=find_cost(backward,end,n)
     else:
         backward=n**2
-    state1=copy.deepcopy(state)
+    state1=copy.copy(state)
     forward=move_forward(state1,agent)
     if forward:
         forward=forward[0][0].agent[agent]
