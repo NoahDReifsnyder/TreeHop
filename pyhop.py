@@ -106,7 +106,7 @@ class Action():
     def __init__(self,name="Default",state=None):
         self.name=name
         self.children=[]
-        self.effects=[]
+        self.effects={}
         self.precond={}
         self.state=state
 counter=0
@@ -250,23 +250,19 @@ def print_methods(mlist=methods):
 ############################################################
 # The actual planner
 
-edges=[]
 verticies=[]
 Policy={}
-def pyhopT(state,tasks,depth=0):
-    if depth>=10:
-        return False,None
+def pyhopT(state,tasks,originalCall=False):
     """
     Try to find a plan that accomplishes tasks in state. 
     If successful, return the plan. Otherwise return False.
     """
-    start=Action()#plan header node
-    result = seek_plan(state,tasks,depth,start) #result holds True or False if planner succeeds or fails
-    start.edges=edges
-    start.verticies=verticies
-    return result,start
+    result = seek_plan(state,tasks) #result holds True or False if planner succeeds or fails
+    if originalCall:
+        return Policy
+    return result
 
-def seek_plan(state,tasks,depth=0,prev_action=None):
+def seek_plan(state,tasks):
     for oldstate in verticies:
         if oldstate==state:
             return True
@@ -291,19 +287,16 @@ def seek_plan(state,tasks,depth=0,prev_action=None):
             otherstates=[]
         precond=opreturn[1]
         action=Action(name=task1, state=state)
+        Policy[state]=action
         action.precond=precond
-        edges.append((state,action))
         if newstate:
-            edges.append((action,newstate))
-            prev_action.children.append(action)
-            action.effects.append(newstate.get_diff(state))
-            solution = seek_plan(newstate,tasks[1:],depth,prev_action=action)
+            action.effects[newstate]=newstate.get_diff(state)
+            solution = seek_plan(newstate,tasks[1:])
         for otherstate in otherstates:
-            result,plan=pyhopT(otherstate,goals,depth+1)
+            result=pyhopT(otherstate,goals)
             if result:
-                action.children.append(plan.children[0])
-                action.effects.append(otherstate.get_diff(state))
-                edges.append((action, otherstate))
+                action.effects[otherstate]=otherstate.get_diff(state)
+        action.children=newstates
         if len(newstates)>0:
             if solution!=False:
                 return True
@@ -313,7 +306,7 @@ def seek_plan(state,tasks,depth=0,prev_action=None):
             subtasks = method(state,*task1[1:])
             # Can't just say "if subtasks:", because that's wrong if subtasks == []
             if subtasks != False:
-                solution = seek_plan(state,subtasks+tasks[1:],depth,prev_action=prev_action)
+                solution = seek_plan(state,subtasks+tasks[1:])
                 if solution != False:
                     return True
     return False

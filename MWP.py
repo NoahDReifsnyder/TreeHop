@@ -64,9 +64,9 @@ while i<=n**2:
 
 goals=[('light_all', 'Agent1', n)]
 treehop.declare_goals(goals)
-Plan,tree=treehop.pyhopT(state, goals)
-print(Plan)
-genExpectations(tree)
+policy=treehop.pyhopT(state, goals,True)
+print(policy)
+genExpectations(policy,state)
 #treehop.print_plan_dfs(actions)
 #print_plan(Plan,exp='Rexp')
 
