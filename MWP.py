@@ -66,6 +66,8 @@ goals=[('light_all', 'Agent1', n)]
 treehop.declare_goals(goals)
 policy=treehop.pyhopT(state, goals,True)
 print(policy)
+for state in policy:
+    print(type(policy[state].children[0]))
 genExpectations(policy,state)
 #treehop.print_plan_dfs(actions)
 #print_plan(Plan,exp='Rexp')
