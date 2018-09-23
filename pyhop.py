@@ -263,9 +263,6 @@ def pyhopT(state,tasks,originalCall=False):
     return result
 
 def seek_plan(state,tasks):
-    for oldstate in verticies:
-        if oldstate==state:
-            return True
     """
     Workhorse for pyhop. state and tasks are as in pyhop.
     - plan is the current partial plan.
@@ -289,14 +286,33 @@ def seek_plan(state,tasks):
         action=Action(name=task1, state=state)
         Policy[state]=action
         action.precond=precond
+        children=[]
         if newstate:
             action.effects[newstate]=newstate.get_diff(state)
-            solution = seek_plan(newstate,tasks[1:])
+            found=False
+            for oldstate in verticies:
+                if oldstate == newstate:
+                    children.append(oldstate)
+                    found=True
+                    solution=True
+                    break
+            if not found:
+                children.append(newstate)
+                solution = seek_plan(newstate,tasks[1:])
         for otherstate in otherstates:
-            result=pyhopT(otherstate,goals)
-            if result:
-                action.effects[otherstate]=otherstate.get_diff(state)
-        action.children=newstates
+            found=False
+            for oldstate in verticies:
+                if oldstate == otherstate:
+                    children.append(oldstate)
+                    found = True
+                    solution = True
+                    break
+            if not found:
+                children.append(otherstate)
+                result=pyhopT(otherstate,goals)
+                if result:
+                    action.effects[otherstate]=otherstate.get_diff(state)
+        action.children=children
         if len(newstates)>0:
             if solution!=False:
                 return True
