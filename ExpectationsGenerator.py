@@ -1,7 +1,14 @@
 #Takes in a graph from pyhop, performs necessary calculations to add expectations.
 import copy
 from queue import *
-class Graph():
+class Expectations(object):
+    def __init__(self):
+        self.informed={}
+        self.immediate={}
+        self.regression={}
+        self.goldilocks={}
+        return
+class Graph(object):
     def __init__(self,starting_state):
         self.starting_state=starting_state
         self.edges=set()
@@ -14,16 +21,20 @@ class Graph():
                 print(var,getattr(self,var))
             else:
                 print(var, len(getattr(self, var)))
+    def initialize_expectations(self):
+        for v in self.verticies:
+            v.expectations=Expectations()
 def genExpectations(policy,starting_state):
     graph=buildGraph(policy,starting_state)
     graph.print()
-    forward_only=(graph.edges-graph.back_edges-graph.cross_edges)
+    graph.initialize_expectations()
     return
 
 def genImmediate(graph):
     return
 
 def genInformed(graph):
+    forward_only=(graph.edges-graph.back_edges-graph.cross_edges)
     return
 
 def genRegression(graph):
