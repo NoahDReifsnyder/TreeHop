@@ -10,7 +10,9 @@ class Expectations(object):
         self.immediate = {}
         self.regression = {}
         self.goldilocks = {}
-        return
+    def print(self):
+        for exp in vars(self):
+            print(exp, getattr(self, exp))
 
 
 class Graph(object):
@@ -80,6 +82,8 @@ class Graph(object):
         for v in self.vertices:
             if hasattr(v, "precond"):
                 v.expectations.immediate = v.precond
+            elif v in self.policy:
+                v.expectations.immediate = self.policy[v].precond
 
     def gen_informed(self):
         forward_only = (self.edges - self.back_edges - self.cross_edges)
@@ -91,12 +95,22 @@ class Graph(object):
             if vertex == self.starting_state:  # vertex=s_0
                 pass  # expectations are null
             elif type(vertex) == type(action_type):  # vertex=an Action
+                vertex.expectations.informed = copy.deepcopy(parent_expectations)
                 pass  # don't change parent_expectations, pass on to grandchildren of preceding state
             else:  # vertex != s_0 and is a state
+                vertex.expectations.informed = copy.deepcopy(parent_expectations)
                 pass
             children = [x for (y, x) in forward_only if y == vertex]
+            # print(vertex.expectations.informed)
             for child in children:
-                queue.put((child, parent_expectations))
+                compound_expectations=copy.deepcopy(parent_expectations)
+                if type(vertex) == type(action_type):
+                    for attr in vertex.effects[child]:  # compound function
+                        if attr not in compound_expectations:
+                            compound_expectations[attr] = {}
+                        for v in vertex.effects[child][attr]:
+                            compound_expectations[attr][v] = vertex.effects[child][attr][v]
+                queue.put((child, compound_expectations))
 
     def gen_regression(self):
         return
@@ -111,6 +125,12 @@ def gen_expectations(policy, starting_state):
     graph.initialize_expectations()
     graph.gen_immediate()
     graph.gen_informed()
+    for state in policy:
+        print(state, state in graph.terminal_nodes)
+        state.expectations.print()
+    # for state in graph.terminal_nodes:
+    #     print(state.lit)
+    #     state.expectations.print()
     return
 
 

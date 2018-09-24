@@ -131,6 +131,7 @@ class State():
                 val=getattr(self,attr)[var]
                 if var not in getattr(otherState,attr) or getattr(otherState,attr)[var]!=val:
                     addDiff(attr,var,val)
+        return diff
     def __eq__(self, otherState):
         if not type(self) == type(otherState):
             return False
