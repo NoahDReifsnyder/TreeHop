@@ -132,7 +132,13 @@ class State():
                 if var not in getattr(otherState,attr) or getattr(otherState,attr)[var]!=val:
                     addDiff(attr,var,val)
     def __eq__(self, otherState):
+        if not type(self) == type(otherState):
+            return False
         for attr in vars(self):
+            try:
+                iter(getattr(self,attr)) #for when expecation object is added to states later, it isn't iterable and thus crashes eq function
+            except:
+                continue
             if attr[0]=="_":
                 continue
             for var in getattr(self,attr):
