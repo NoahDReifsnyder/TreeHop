@@ -3,11 +3,11 @@
 import pyhop as treehop
 import copy
 from collections import defaultdict
-Geff=(1,1)
+Geff=1
 def refuel(state,agent):
     pre=state.fuel[agent]
-    state.fuel[agent]=(pre[0]+10,pre[1]+10)
-    return ([state],{'fuel':{agent:(0,1)}})
+    state.fuel[agent]=10
+    return ([state],{'fuel':{agent:0}})
 
 def unstuck(state,agent):
     loc=state.agent[agent]
@@ -35,7 +35,7 @@ def light(state,agent,beacon):
 def move_forward(state, agent, test=0):
     prev=state.fuel[agent]
     eff=Geff
-    state.fuel[agent]=(prev[0]-eff[1],prev[1]-eff[0])
+    state.fuel[agent]=(prev-eff)
     state1=copy.copy(state)
     if (test==0):
         alt=move_backward(state1,agent,1)
@@ -58,7 +58,7 @@ def move_forward(state, agent, test=0):
 def move_backward(state, agent, test=0):
     prev=state.fuel[agent]
     eff=Geff
-    state.fuel[agent]=(prev[0]-eff[1],prev[1]-eff[0])
+    state.fuel[agent]=(prev-eff)
     state1=copy.copy(state)
     if (test == 0):
         alt=move_forward(state1,agent,1)
@@ -81,7 +81,7 @@ def move_backward(state, agent, test=0):
 def move_up(state, agent, test=0):
     prev=state.fuel[agent]
     eff=Geff
-    state.fuel[agent]=(prev[0]-eff[1],prev[1]-eff[0])
+    state.fuel[agent]=(prev-eff)
     state1=copy.copy(state)
     if (test==0):
         alt=move_backward(state1,agent,1)
@@ -104,7 +104,7 @@ def move_up(state, agent, test=0):
 def move_down(state, agent, test=0):
     prev=state.fuel[agent]
     eff=Geff
-    state.fuel[agent]=(prev[0]-eff[1],prev[1]-eff[0])
+    state.fuel[agent]=(prev-eff)
     state1=copy.copy(state)
     if (test==0):
         alt=move_forward(state1,agent,1)
@@ -133,7 +133,7 @@ def find_cost(start,end,n):
 
         
 def achieve_goal(state, agent, end, n, tFlag=0):
-    if state.fuel[agent][0]<=2:
+    if state.fuel[agent]<=2:
         return[('refuel',agent),('achieve_goal',agent, end,n)]
     start=state.agent[agent]
     if not state.clear[start]:

@@ -184,15 +184,27 @@ def print_goal(goal,indent=4):
                 print(' =', val)
     else: print('False')
 
-def print_plan_dfs(action, tab=0): #Needs work,incorrect
-    for x in range(0,tab):
-        print("    ",end="")
-    print(action.name,action.children)
-    first=0
+def print_policy(policy, state, depth=[], tracker=[], tab=0): #Needs work,incorrect
+    if state not in policy:
+        for x in depth:
+            print(str(x) + " ", end="")
+        print("Goal",end="\n\n\n")
+        return
+    if state in tracker:
+        for x in depth:
+            print(str(x) + " ", end="")
+        print(tracker.index(state))
+        return
+    tracker.append(state)
+    action=policy[state]
+    depth.append(tracker.index(state))
+    for x in depth:
+        print(str(x)+" ",end="")
+    print(action.name)
     for child in action.children:
-        print_plan_dfs(child, tab=tab + first)
-        if first==0:
-            first=1
+        print_policy(policy, child, depth=depth, tracker=tracker)
+
+    depth.remove(tracker.index(state))
 
 ############################################################
 # Helper functions that may be useful in domain models
@@ -295,29 +307,32 @@ def seek_plan(state,tasks):
         action.precond=precond
         children=[]
         if newstate:
-            action.effects[newstate]=newstate.get_diff(state)
             found=False
             for oldstate in verticies:
                 if oldstate == newstate:
                     children.append(oldstate)
+                    action.effects[oldstate] = oldstate.get_diff(state)
                     found=True
                     solution=True
                     break
             if not found:
-                children.append(newstate)
                 solution = seek_plan(newstate,tasks[1:])
+                if solution != False:
+                    children.append(newstate)
+                    action.effects[newstate] = newstate.get_diff(state)
         for otherstate in otherstates:
             found=False
             for oldstate in verticies:
                 if oldstate == otherstate:
                     children.append(oldstate)
+                    action.effects[oldstate]=oldstate.get_diff(state)
                     found = True
                     solution = True
                     break
             if not found:
-                children.append(otherstate)
                 result=pyhopT(otherstate,goals)
                 if result:
+                    children.append(otherstate)
                     action.effects[otherstate]=otherstate.get_diff(state)
         action.children=children
         if len(newstates)>0:

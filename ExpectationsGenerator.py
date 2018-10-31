@@ -2,7 +2,7 @@
 import copy
 from queue import *
 from pyhop import Action
-
+import time
 
 class Expectations(object):
     def __init__(self):
@@ -26,6 +26,10 @@ class Graph(object):
         self.policy = policy
         self.inverse_policy = {v: k for k, v in policy.items()}
         self.build()
+        self.add_back_edges()
+
+    def add_back_edges(self):
+        return
 
     def build(self):
         queue = Queue()
@@ -60,7 +64,7 @@ class Graph(object):
             new = queue.get()
             if new == dt:
                 return True
-            children = [x for (y, x) in self.edges if y == new]
+            children = [x for (y, x) in self.edges-self.back_edges if y == new ]
             for child in children:
                 if not visited[child]:
                     queue.put(child)
@@ -113,21 +117,85 @@ class Graph(object):
                 queue.put((child, compound_expectations))
 
     def gen_regression(self):
+        td=time.time()
+        t=Tau(self)
+        print(time.time()-td)
+        print(len(t.edges))
         return
 
     def gen_goldilocks(self):
         return
 
 
+class Vertex:
+    vs={}
+    def __init__(self,node,num):
+        self.node=node
+        self.num=num
+        self.type=type(node)
+    def __str__(self):
+        return str(self.node)+","+str(self.num)
+def get_vertex(node,num):
+    if node not in Vertex.vs:
+        Vertex.vs[node]={}
+    if num not in Vertex.vs[node]:
+        Vertex.vs[node][num]=Vertex(node,num)
+    return Vertex.vs[node][num]
+
+class Tau:
+    def __init__(self,graph):
+        self.edges=set()
+        self.vertices={}
+        self.starting_state=graph.starting_state
+        self.vertices[self.starting_state]=0
+        starting_vertex=Vertex(self.starting_state,0)
+        self.removed=set()
+        self.construct_tree(graph.edges,graph.back_edges,starting_vertex)
+
+
+    def construct_tree(self,edges,BE,vertex):
+        edges=copy.copy(edges)
+        q=Queue()
+        node_edges=[(x,y) for (x,y) in edges if x==vertex.node]
+        for edge in node_edges:
+            q.put((edge,edges,BE))
+        while not q.empty():
+            e,edges,BE=q.get()
+            a=get_vertex(e[0],self.vertices[e[0]])
+            b=e[1]
+            if b in self.vertices:
+                self.vertices[b]+=1
+            else:
+                self.vertices[b]=0
+            b=get_vertex(b,self.vertices[b])
+            self.edges.add((a,b))
+            if len(self.edges)%10000==0:
+                print(len(self.edges))
+            if e in BE:
+                BE.remove(e)
+                print("BE",len(BE))
+                edges.remove(e)
+            node_edges = [(x, y) for (x, y) in edges if x == b.node]
+            for edge in node_edges:
+                q.put((edge, edges, BE))
+        return
+
 def gen_expectations(policy, starting_state):
+    print('here')
     graph = Graph(starting_state, policy)
+    print("finished graph")
     graph.print()
     graph.initialize_expectations()
     graph.gen_immediate()
+    print("finished immediate")
     graph.gen_informed()
-    for state in policy:
-        print(state, state in graph.terminal_nodes)
-        state.expectations.print()
+    print("finished informed")
+    graph.gen_regression()
+    print("finished regression")
+    graph.gen_goldilocks()
+    print("finished goldilocks")
+    # for state in policy:
+    #     state.expectations.print()
     # for state in graph.terminal_nodes:
     #     print(state.lit)
     #     state.expectations.print()
