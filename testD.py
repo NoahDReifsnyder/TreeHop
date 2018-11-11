@@ -4,6 +4,7 @@ import pyhop as treehop
 import copy
 from collections import defaultdict
 Geff=1
+ND=False #Action type
 def refuel(state,agent):
     pre=state.fuel[agent]
     state.fuel[agent]=10
@@ -32,13 +33,13 @@ def light(state,agent,beacon):
         return ([state],precond)
 
 #forward or up
-def move_forward(state, agent, test=0):
+def move_forward(state, agent, buffer=True):
     prev=state.fuel[agent]
     eff=Geff
     state.fuel[agent]=(prev-eff)
     state1=copy.copy(state)
-    if (test==0):
-        alt=move_backward(state1,agent,1)
+    if (ND and buffer):
+        alt=move_backward(state1,agent,False)
     else:
         alt=False
     loc=state.agent[agent]
@@ -55,13 +56,13 @@ def move_forward(state, agent, test=0):
     else: return False
 
 #backward or down
-def move_backward(state, agent, test=0):
+def move_backward(state, agent, buffer=True):
     prev=state.fuel[agent]
     eff=Geff
     state.fuel[agent]=(prev-eff)
     state1=copy.copy(state)
-    if (test == 0):
-        alt=move_forward(state1,agent,1)
+    if (ND and buffer):
+        alt=move_forward(state1,agent,False)
     else:
         alt=False
     loc=state.agent[agent]
@@ -78,13 +79,13 @@ def move_backward(state, agent, test=0):
     else: return False
 
 #up or backward
-def move_up(state, agent, test=0):
+def move_up(state, agent, buffer=True):
     prev=state.fuel[agent]
     eff=Geff
     state.fuel[agent]=(prev-eff)
     state1=copy.copy(state)
-    if (test==0):
-        alt=move_backward(state1,agent,1)
+    if (ND and buffer):
+        alt=move_backward(state1,agent,False)
     else:
         alt=False
     loc=state.agent[agent]
@@ -101,13 +102,13 @@ def move_up(state, agent, test=0):
     else: return False
 
 #down or forward
-def move_down(state, agent, test=0):
+def move_down(state, agent, buffer=True):
     prev=state.fuel[agent]
     eff=Geff
     state.fuel[agent]=(prev-eff)
     state1=copy.copy(state)
-    if (test==0):
-        alt=move_forward(state1,agent,1)
+    if (ND and buffer):
+        alt=move_forward(state1,agent,False)
     else:
         alt=False
     loc=state.agent[agent]
