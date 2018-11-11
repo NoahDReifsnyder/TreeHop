@@ -4,6 +4,10 @@ from queue import *
 from pyhop import Action
 import time
 
+class Reg(object):
+    def __init__(self):
+        self.exp={} 
+
 class Expectations(object):
     def __init__(self):
         self.informed = {}
@@ -52,6 +56,13 @@ class Graph(object):
                 if child not in self.vertices:
                     queue.put(child)
                     self.vertices.add(child)
+        # count=0
+        # for edge in self.edges - self.back_edges:
+        #     count+=1
+        #     print(len(self.edges-self.back_edges),count)
+        #     if (self.is_parent(edge[1],edge[0])):
+        #         print("Fuck")
+        #         time.sleep(1)1
 
     def is_parent(self, st, dt):  # determine if st is parent of dt in self, for deciding if edge is a backedge in buildself
         visited = {}
@@ -117,10 +128,20 @@ class Graph(object):
                 queue.put((child, compound_expectations))
 
     def gen_regression(self):
-        td=time.time()
-        t=Tau(self)
-        print(time.time()-td)
-        print(len(t.edges))
+        print(self.edges)
+        print(self.terminal_nodes)
+        expanded=Queue()
+        for node in self.terminal_nodes:
+            expanded.put(node)
+        expanded_edges=set()
+        count=0
+        while not expanded.empty():
+            node=expanded.get()
+            for edge in self.edges-expanded_edges:
+                if edge[1]==node:
+                    if edge in self.back_edges or edge in self.cross_edges:
+                        expanded_edges.add(edge)
+                    expanded.put(edge[0])
         return
 
     def gen_goldilocks(self):
@@ -142,44 +163,43 @@ def get_vertex(node,num):
         Vertex.vs[node][num]=Vertex(node,num)
     return Vertex.vs[node][num]
 
-class Tau:
-    def __init__(self,graph):
-        self.edges=set()
-        self.vertices={}
-        self.starting_state=graph.starting_state
-        self.vertices[self.starting_state]=0
-        starting_vertex=Vertex(self.starting_state,0)
-        self.removed=set()
-        self.construct_tree(graph.edges,graph.back_edges,starting_vertex)
-
-
-    def construct_tree(self,edges,BE,vertex):
-        edges=copy.copy(edges)
-        q=Queue()
-        node_edges=[(x,y) for (x,y) in edges if x==vertex.node]
-        for edge in node_edges:
-            q.put((edge,edges,BE))
-        while not q.empty():
-            e,edges,BE=q.get()
-            a=get_vertex(e[0],self.vertices[e[0]])
-            b=e[1]
-            if b in self.vertices:
-                self.vertices[b]+=1
-            else:
-                self.vertices[b]=0
-            b=get_vertex(b,self.vertices[b])
-            self.edges.add((a,b))
-            if len(self.edges)%10000==0:
-                print(len(self.edges))
-            if e in BE:
-                BE.remove(e)
-                print("BE",len(BE))
-                edges.remove(e)
-            node_edges = [(x, y) for (x, y) in edges if x == b.node]
-            for edge in node_edges:
-                q.put((edge, edges, BE))
-        return
-
+# class Tau:
+#     def __init__(self,graph):
+#         self.edges=set()
+#         self.vertices={}
+#         self.starting_state=graph.starting_state
+#         self.vertices[self.starting_state]=0
+#         starting_vertex=Vertex(self.starting_state,0)
+#         self.removed=set()
+#         self.construct_tree(graph.edges,graph.back_edges,starting_vertex)
+#
+#
+#     def construct_tree(self,edges,BE,vertex):
+#         edges=copy.copy(edges)
+#         q=Queue()
+#         node_edges=[(x,y) for (x,y) in edges if x==vertex.node]
+#         for edge in node_edges:
+#             q.put((edge,edges,BE))
+#         while not q.empty():
+#             e,edges,BE=q.get()
+#             a=get_vertex(e[0],self.vertices[e[0]])
+#             b=e[1]
+#             if b in self.vertices:
+#                 self.vertices[b]+=1
+#             else:
+#                 self.vertices[b]=0
+#             b=get_vertex(b,self.vertices[b])
+#             self.edges.add((a,b))
+#             if len(self.edges)%10000==0:
+#                 print(len(self.edges))
+#             if e in BE:
+#                 BE.remove(e)
+#                 print("BE",len(BE))
+#                 edges.remove(e)
+#             node_edges = [(x, y) for (x, y) in edges if x == b.node]
+#             for edge in node_edges:
+#                 q.put((edge, edges, BE))
+#         return
 def gen_expectations(policy, starting_state):
     print('here')
     graph = Graph(starting_state, policy)

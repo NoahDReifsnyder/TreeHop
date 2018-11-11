@@ -18,7 +18,7 @@ state.beacons={}
 state.agent={'Agent1':1}
 state.clear={}
 state.fuel={'Agent1':10}
-n=4
+n=5
 placed=[]
 for b in state.lit:
     x=randint(1,n*n)
@@ -65,7 +65,7 @@ while i<=n**2:
 goals=[('light_all', 'Agent1', n)]
 treehop.declare_goals(goals)
 policy=treehop.pyhopT(state, goals,True)
-treehop.print_policy(policy,state)
+#treehop.print_policy(policy,state)
 
 gen_expectations(policy, state)
 #treehop.print_plan_dfs(actions)
