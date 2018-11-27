@@ -11,10 +11,11 @@ ND=False #Action type
 #forward or up
 def stack(state, block1,block2):
     state1=copy.copy(state)
-    if state.clear[block1] and state.clear[block2]:
+    if state.clear[block1] and state.clear[block2] and state.energy[1]>=10:
         precond={'clear':{block1:True, block2:True}}
         state.on[block1] = block2
         state.clear[block2]=False
+        state.energy[1]-=10
         if ND:
             if not state.clear[state.infront[loc]]:
                 return False

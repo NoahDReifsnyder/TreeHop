@@ -12,6 +12,7 @@ import time
 state=treehop.State('state')
 state.on={}
 state.clear={}
+state.energy={1:100}
 numBlocks=100
 towerSize=10
 chanceToStack=10
