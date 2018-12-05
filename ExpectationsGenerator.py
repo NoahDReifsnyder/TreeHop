@@ -19,26 +19,26 @@ class Expectations(object):
             print(exp, getattr(self, exp))
 
 
-def o_plus(left,right):
+def o_plus(A, B):
     new_dict={}
-    l=[x for x in right if x not in left]
+    l=[x for x in B if x not in A]
     for x in l:
-        new_dict[x]=right[x]
-    for x in left:
-        new_dict[x]=left[x]
+        new_dict[x]=B[x]
+    for x in A:
+        new_dict[x]=A[x]
     # print(left)
     # print(right)
     # print(new_dict)
     return new_dict
-def o_minus(left,right):
+def o_minus(A, B):
     new_dict={}
-    l=[x for x in left if x not in right]
+    l=[x for x in A if x not in B]
     for x in l:
-        new_dict[x]=left[x]
+        new_dict[x]=A[x]
     return new_dict
-def o_divide(left,right):
+def o_divide(A, k):
     return
-def o_times(left,right):
+def o_times(A,B):
     return
 
 class Graph(object):
@@ -50,10 +50,14 @@ class Graph(object):
         self.cross_edges = set()
         self.vertices = set()
         self.policy = policy
-        self.rev_policy={}
+        self.inverse_policy={}
+        print(policy[starting_state].effects)
         for state in policy:
-            self.rev_policy[policy[state]]=state
-        self.inverse_policy = {v: k for k, v in policy.items()}
+            for effect_state in policy[state].effects:
+                self.inverse_policy[effect_state]=policy[state]
+        for state in self.inverse_policy:
+            print(state)
+        #self.inverse_policy = {v: k for k, v in policy.items()}
         self.build()
         self.add_back_edges()
 
@@ -120,7 +124,10 @@ class Graph(object):
 
     def gen_immediate(self):
         for v in self.policy:
-            v.expectations.immediate=o_plus(self.policy[v].precond,self.rev_policy[v].effects)
+            if v == self.starting_state:
+                v.expectations.immediate=self.policy[v].precond
+            else:
+                v.expectations.immediate=o_plus(self.policy[v].precond,self.inverse_policy[v].effects[v])
             self.policy[v].expectations.immediate=v.expectations.immediate
 
     def gen_informed(self):
