@@ -5,7 +5,7 @@ from testD import *
 from collections import defaultdict
 from random import *
 import collections
-from ExpectationsGenerator import gen_expectations
+from ExpectationsGenerator import *
 import time
 
 
@@ -46,10 +46,13 @@ for i in range(numBlocks):
 
 goals=[('achieve_goal', towerSize)]
 treehop.declare_goals(goals)
+treehop.declare_numeric('energy')
 policy=treehop.pyhopT(state, goals,True)
 treehop.print_policy(policy,state)
-
-#gen_expectations(policy, state)
+test1={1:2,2:3}
+test2={2:2,3:2}
+print(o_minus(test1,test2))
+gen_expectations(policy, state)
 #treehop.print_plan_dfs(actions)
 #print_plan(Plan,exp='Rexp')
 

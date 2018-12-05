@@ -19,6 +19,28 @@ class Expectations(object):
             print(exp, getattr(self, exp))
 
 
+def o_plus(left,right):
+    new_dict={}
+    l=[x for x in right if x not in left]
+    for x in l:
+        new_dict[x]=right[x]
+    for x in left:
+        new_dict[x]=left[x]
+    # print(left)
+    # print(right)
+    # print(new_dict)
+    return new_dict
+def o_minus(left,right):
+    new_dict={}
+    l=[x for x in left if x not in right]
+    for x in l:
+        new_dict[x]=left[x]
+    return new_dict
+def o_divide(left,right):
+    return
+def o_times(left,right):
+    return
+
 class Graph(object):
     def __init__(self,starting_state,policy):
         self.starting_state = starting_state
@@ -28,6 +50,9 @@ class Graph(object):
         self.cross_edges = set()
         self.vertices = set()
         self.policy = policy
+        self.rev_policy={}
+        for state in policy:
+            self.rev_policy[policy[state]]=state
         self.inverse_policy = {v: k for k, v in policy.items()}
         self.build()
         self.add_back_edges()
@@ -94,11 +119,9 @@ class Graph(object):
             v.expectations = Expectations()
 
     def gen_immediate(self):
-        for v in self.vertices:
-            if hasattr(v, "precond"):
-                v.expectations.immediate = v.precond
-            elif v in self.policy:
-                v.expectations.immediate = self.policy[v].precond
+        for v in self.policy:
+            v.expectations.immediate=o_plus(self.policy[v].precond,self.rev_policy[v].effects)
+            self.policy[v].expectations.immediate=v.expectations.immediate
 
     def gen_informed(self):
         forward_only = (self.edges - self.back_edges - self.cross_edges)
@@ -163,43 +186,6 @@ def get_vertex(node,num):
         Vertex.vs[node][num]=Vertex(node,num)
     return Vertex.vs[node][num]
 
-# class Tau:
-#     def __init__(self,graph):
-#         self.edges=set()
-#         self.vertices={}
-#         self.starting_state=graph.starting_state
-#         self.vertices[self.starting_state]=0
-#         starting_vertex=Vertex(self.starting_state,0)
-#         self.removed=set()
-#         self.construct_tree(graph.edges,graph.back_edges,starting_vertex)
-#
-#
-#     def construct_tree(self,edges,BE,vertex):
-#         edges=copy.copy(edges)
-#         q=Queue()
-#         node_edges=[(x,y) for (x,y) in edges if x==vertex.node]
-#         for edge in node_edges:
-#             q.put((edge,edges,BE))
-#         while not q.empty():
-#             e,edges,BE=q.get()
-#             a=get_vertex(e[0],self.vertices[e[0]])
-#             b=e[1]
-#             if b in self.vertices:
-#                 self.vertices[b]+=1
-#             else:
-#                 self.vertices[b]=0
-#             b=get_vertex(b,self.vertices[b])
-#             self.edges.add((a,b))
-#             if len(self.edges)%10000==0:
-#                 print(len(self.edges))
-#             if e in BE:
-#                 BE.remove(e)
-#                 print("BE",len(BE))
-#                 edges.remove(e)
-#             node_edges = [(x, y) for (x, y) in edges if x == b.node]
-#             for edge in node_edges:
-#                 q.put((edge, edges, BE))
-#         return
 def gen_expectations(policy, starting_state):
     print('here')
     graph = Graph(starting_state, policy)
@@ -208,14 +194,14 @@ def gen_expectations(policy, starting_state):
     graph.initialize_expectations()
     graph.gen_immediate()
     print("finished immediate")
-    graph.gen_informed()
-    print("finished informed")
-    graph.gen_regression()
-    print("finished regression")
-    graph.gen_goldilocks()
-    print("finished goldilocks")
-    # for state in policy:
-    #     state.expectations.print()
+    # graph.gen_informed()
+    # print("finished informed")
+    # graph.gen_regression()
+    # print("finished regression")
+    # graph.gen_goldilocks()
+    # print("finished goldilocks")
+    for state in policy:
+        state.expectations.print()
     # for state in graph.terminal_nodes:
     #     print(state.lit)
     #     state.expectations.print()

@@ -108,6 +108,7 @@ class Action():
         self.children=[]
         self.effects={}
         self.precond={}
+        self.nprecond={}
         self.state=state
 counter=0
 class State():
@@ -229,11 +230,12 @@ def find_if(cond,seq):
 
 operators = {}
 methods = {}
-goals = []
+numerics = set()
+goals = set()
 
 def declare_goals(goal_list):
     for goal in goal_list:
-        goals.append(goal)
+        goals.add(goal)
     return
 
 def declare_operators(*op_list):
@@ -252,6 +254,9 @@ def declare_methods(task_name,*method_list):
     """
     methods.update({task_name:list(method_list)})
     return methods[task_name]
+
+def declare_numeric(dict_name):
+     numerics.add(dict_name)
 
 ############################################################
 # Commands to find out what the operators and methods are

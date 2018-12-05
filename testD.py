@@ -4,15 +4,18 @@ import pyhop as treehop
 import copy
 from random import *
 from collections import defaultdict
+#nprecond={dict:{1:(denom:val)}}
 Geff=1
 err=.1
 ND=False #Action type
+
+
 
 #forward or up
 def stack(state, block1,block2):
     state1=copy.copy(state)
     if state.clear[block1] and state.clear[block2] and state.energy[1]>=10:
-        precond={'clear':{block1:True, block2:True}}
+        precond={'clear':{block1:True, block2:True},'energy':{1:('>=',10)}}
         state.on[block1] = block2
         state.clear[block2]=False
         state.energy[1]-=10
@@ -28,6 +31,7 @@ def stack(state, block1,block2):
         print(state.clear[block1],state.clear[block2])
         print(block1,block2)
         return False
+
 
 #backward or down
 def unstack(state, block1, block2):
@@ -70,11 +74,15 @@ def achieve_goal(state, n):
     n=n-size
     moves=[]
     used=[]
+    energy=state.energy[1]
     for i in range(n):
+        if energy<10:
+            moves.append('recharge')
         block=choice([block for block in state.clear if state.clear[block] and block!=top and block not in used])
         if not state.clear[block]:
             print(str(block)+" IS NOT CLEAR")
         moves.append(('stack',block,top))
+        energy-=10
         top=block
         used.append(block)
     return moves
