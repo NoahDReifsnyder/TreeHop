@@ -158,8 +158,6 @@ class Graph(object):
                 queue.put((child, compound_expectations))
 
     def gen_regression(self):
-        print(self.edges)
-        print(self.terminal_nodes)
         expanded=Queue()
         for node in self.terminal_nodes:
             expanded.put(node)
