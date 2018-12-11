@@ -307,25 +307,18 @@ def seek_plan(state,tasks):
         else:
             otherstates=[]
         precond=opreturn[1]
-        numeric_effects=opreturn[2]
         action=Action(name=task1, state=state)
         Policy[state]=action
         action.precond=precond
         children=[]
 
-        def add_numeric_effects(effect,numeric_effect):
-            for key in numeric_effect:
-                effect[key]=numeric_effect[key]
-
         for i in range(len(newstates)):
             newstate=newstates[i]
-            numeric_effect=numeric_effects[i]
             found = False
             for oldstate in verticies:
                 if oldstate == newstate:
                     children.append(oldstate)
                     action.effects[oldstate] = oldstate.get_diff(state)
-                    add_numeric_effects(action.effects[oldstate],numeric_effect)
                     found = True
                     solution = True
                     break
@@ -335,13 +328,11 @@ def seek_plan(state,tasks):
                     if solution != False:
                         children.append(newstate)
                         action.effects[newstate] = newstate.get_diff(state)
-                        add_numeric_effects(action.effects[newstate], numeric_effect)
                 else:
                     result = pyhopT(newstate, goals)
                     if result:
                         children.append(newstate)
                         action.effects[newstate] = newstate.get_diff(state)
-                        add_numeric_effects(action.effects[newstate],numeric_effect)
 
         # if newstate:
         #     found=False

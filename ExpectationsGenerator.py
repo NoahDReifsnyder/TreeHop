@@ -19,10 +19,6 @@ class Expectations(object):
             print(exp, getattr(self, exp))
 
 
-def compound(A,B):
-    print(A,B)
-    return B.replace("X","("+A+")")
-
 def o_plus(A, B):
     new_dict={}
     l=[x for x in B]+[x for x in A]
@@ -33,22 +29,11 @@ def o_plus(A, B):
     for x in l:
         new_dict[x]={}
         if x in B and x in A:
-            if x in numerics:
-                keys=[y for y in B[x] if y in A[x]]
-                for key in keys:
-                    new_dict[x][key]=compound(A[x][key],B[x][key])
-                new_keys = [y for y in A[x] if y not in keys]
-                for key in new_keys:
-                    new_dict[x][key] = A[x][key]
-                new_keys = [y for y in B[x] if y not in keys]
-                for key in new_keys:
-                    new_dict[x][key] = B[x][key]
-            else:
-                keys=[y for y in B[x] if y not in A[x]]
-                for key in keys:
-                    new_dict[x][key] = B[x][key]
-                for key in A[x]:
-                    new_dict[x][key] = A[x][key]
+            keys=[y for y in B[x] if y not in A[x]]
+            for key in keys:
+                new_dict[x][key] = B[x][key]
+            for key in A[x]:
+                new_dict[x][key] = A[x][key]
         elif x in B:
             for key in B[x]:
                 new_dict[x][key] = B[x][key]
@@ -236,7 +221,6 @@ def gen_expectations(policy, starting_state):
     # print("finished goldilocks")
     for state in policy:
         state.expectations.print()
-    test()
     # for state in graph.terminal_nodes:
     #     print(state.lit)
     #     state.expectations.print()

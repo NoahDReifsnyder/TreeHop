@@ -14,20 +14,19 @@ ND=False #Action type
 #forward or up
 def stack(state, block1,block2):
     state1=copy.copy(state)
-    if state.clear[block1] and state.clear[block2] and state.energy[1]>=10:
-        precond={'clear':{block1:True, block2:True},'energy':{1:('>=',10)}}
+    if state.clear[block1] and state.clear[block2] and state.energy[1][0]>=10:
+        precond={'clear':{block1:True, block2:True},'energy':{1:(10,'inf')}}
         state.on[block1] = block2
         state.clear[block2]=False
-        state.energy[1]-=10
-        numeric_effects={'energy':{1:"X-10"}}
-        numeric_effects1={'energy':{1:"X-10"}}
+        state.energy[1][0]-=(10+err)
+        state.energy[1][1]-=(10-err)
         if ND:
             if not state.clear[state.infront[loc]]:
                 return False
             precond['clear'][state.infront[loc]]=1
-            return ([state,state1],precond,[numeric_effects,numeric_effects2])
+            return ([state,state1],precond,)
         else:
-            return ([state], precond,[numeric_effects])
+            return ([state], precond,)
     else:
         print('stack')
         print(state.clear[block1],state.clear[block2])
@@ -78,13 +77,13 @@ def achieve_goal(state, n):
     used=[]
     energy=state.energy[1]
     for i in range(n):
-        if energy<10:
+        energy=state.energy[1]
+        if energy[0]<10:
             moves.append('recharge')
         block=choice([block for block in state.clear if state.clear[block] and block!=top and block not in used])
         if not state.clear[block]:
             print(str(block)+" IS NOT CLEAR")
         moves.append(('stack',block,top))
-        energy-=10
         top=block
         used.append(block)
     return moves
