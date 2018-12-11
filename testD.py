@@ -19,13 +19,15 @@ def stack(state, block1,block2):
         state.on[block1] = block2
         state.clear[block2]=False
         state.energy[1]-=10
+        numeric_effects={'energy':{1:"X-10"}}
+        numeric_effects1={'energy':{1:"X-10"}}
         if ND:
             if not state.clear[state.infront[loc]]:
                 return False
             precond['clear'][state.infront[loc]]=1
-            return ([state,state1],precond)
+            return ([state,state1],precond,[numeric_effects,numeric_effects2])
         else:
-            return ([state], precond)
+            return ([state], precond,[numeric_effects])
     else:
         print('stack')
         print(state.clear[block1],state.clear[block2])

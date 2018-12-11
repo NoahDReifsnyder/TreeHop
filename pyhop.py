@@ -301,44 +301,76 @@ def seek_plan(state,tasks):
         operator = operators[task1[0]]
         opreturn= operator(copy.copy(state),*task1[1:])
         newstates=opreturn[0]
-        newstate=newstates[0]
+        firststate=newstates[0]
         if len(newstates)>1:
             otherstates=newstates[1:]
         else:
             otherstates=[]
         precond=opreturn[1]
+        numeric_effects=opreturn[2]
         action=Action(name=task1, state=state)
         Policy[state]=action
         action.precond=precond
         children=[]
-        if newstate:
-            found=False
+
+        def add_numeric_effects(effect,numeric_effect):
+            for key in numeric_effect:
+                effect[key]=numeric_effect[key]
+
+        for i in range(len(newstates)):
+            newstate=newstates[i]
+            numeric_effect=numeric_effects[i]
+            found = False
             for oldstate in verticies:
                 if oldstate == newstate:
                     children.append(oldstate)
                     action.effects[oldstate] = oldstate.get_diff(state)
-                    found=True
-                    solution=True
-                    break
-            if not found:
-                solution = seek_plan(newstate,tasks[1:])
-                if solution != False:
-                    children.append(newstate)
-                    action.effects[newstate] = newstate.get_diff(state)
-        for otherstate in otherstates:
-            found=False
-            for oldstate in verticies:
-                if oldstate == otherstate:
-                    children.append(oldstate)
-                    action.effects[oldstate]=oldstate.get_diff(state)
+                    add_numeric_effects(action.effects[oldstate],numeric_effect)
                     found = True
                     solution = True
                     break
             if not found:
-                result=pyhopT(otherstate,goals)
-                if result:
-                    children.append(otherstate)
-                    action.effects[otherstate]=otherstate.get_diff(state)
+                if newstate==firststate:
+                    solution = seek_plan(newstate, tasks[1:])
+                    if solution != False:
+                        children.append(newstate)
+                        action.effects[newstate] = newstate.get_diff(state)
+                        add_numeric_effects(action.effects[newstate], numeric_effect)
+                else:
+                    result = pyhopT(newstate, goals)
+                    if result:
+                        children.append(newstate)
+                        action.effects[newstate] = newstate.get_diff(state)
+                        add_numeric_effects(action.effects[newstate],numeric_effect)
+
+        # if newstate:
+        #     found=False
+        #     for oldstate in verticies:
+        #         if oldstate == newstate:
+        #             children.append(oldstate)
+        #             action.effects[oldstate] = oldstate.get_diff(state)
+        #             found = True
+        #             solution = True
+        #             break
+        #     if not found:
+        #         solution = seek_plan(newstate, tasks[1:])
+        #         if solution != False:
+        #             children.append(newstate)
+        #             action.effects[newstate] = newstate.get_diff(state)
+        # for otherstate in otherstates:
+        #     found=False
+        #     for oldstate in verticies:
+        #         if oldstate == otherstate:
+        #             children.append(oldstate)
+        #             action.effects[oldstate]=oldstate.get_diff(state)
+        #             found = True
+        #             solution = True
+        #             break
+        #     if not found:
+        #         result = pyhopT(otherstate, goals)
+        #         if result:
+        #             children.append(otherstate)
+        #             action.effects[otherstate] = otherstate.get_diff(state)
         action.children=children
         if len(newstates)>0:
             if solution!=False:

@@ -1,7 +1,7 @@
 #Takes in a graph from pyhop, performs necessary calculations to add expectations.
 import copy
 from queue import *
-from pyhop import Action
+from pyhop import Action,numerics
 import time
 
 class Reg(object):
@@ -19,16 +19,45 @@ class Expectations(object):
             print(exp, getattr(self, exp))
 
 
+def compound(A,B):
+    print(A,B)
+    return B.replace("X","("+A+")")
+
 def o_plus(A, B):
     new_dict={}
-    l=[x for x in B if x not in A]
+    l=[x for x in B]+[x for x in A]
+    print(A)
+    print(B)
+    l=set(l)
+    print(l)
     for x in l:
-        new_dict[x]=B[x]
-    for x in A:
-        new_dict[x]=A[x]
-    # print(left)
-    # print(right)
-    # print(new_dict)
+        new_dict[x]={}
+        if x in B and x in A:
+            if x in numerics:
+                keys=[y for y in B[x] if y in A[x]]
+                for key in keys:
+                    new_dict[x][key]=compound(A[x][key],B[x][key])
+                new_keys = [y for y in A[x] if y not in keys]
+                for key in new_keys:
+                    new_dict[x][key] = A[x][key]
+                new_keys = [y for y in B[x] if y not in keys]
+                for key in new_keys:
+                    new_dict[x][key] = B[x][key]
+            else:
+                keys=[y for y in B[x] if y not in A[x]]
+                for key in keys:
+                    new_dict[x][key] = B[x][key]
+                for key in A[x]:
+                    new_dict[x][key] = A[x][key]
+        elif x in B:
+            for key in B[x]:
+                new_dict[x][key] = B[x][key]
+        elif x in A:
+            for key in A[x]:
+                new_dict[x][key] = A[x][key]
+    print(new_dict)
+    print('')
+
     return new_dict
 def o_minus(A, B):
     new_dict={}
@@ -137,24 +166,24 @@ class Graph(object):
         action_type = Action()
         while not queue.empty():
             vertex, parent_expectations = queue.get()
-            if vertex == self.starting_state:  # vertex=s_0
-                pass  # expectations are null
-            elif type(vertex) == type(action_type):  # vertex=an Action
+            if type(vertex) == type(action_type):  # vertex=an Action
                 vertex.expectations.informed = copy.deepcopy(parent_expectations)
                 pass  # don't change parent_expectations, pass on to grandchildren of preceding state
+            elif vertex==self.starting_state:
+                pass #starting state, null informed
             else:  # vertex != s_0 and is a state
-                vertex.expectations.informed = copy.deepcopy(parent_expectations)
+                vertex.expectations.informed = o_plus(self.inverse_policy[vertex].effects[vertex],copy.deepcopy(parent_expectations))
                 pass
             children = [x for (y, x) in forward_only if y == vertex]
             # print(vertex.expectations.informed)
             for child in children:
-                compound_expectations=copy.deepcopy(parent_expectations)
-                if type(vertex) == type(action_type):
-                    for attr in vertex.effects[child]:  # compound function
-                        if attr not in compound_expectations:
-                            compound_expectations[attr] = {}
-                        for v in vertex.effects[child][attr]:
-                            compound_expectations[attr][v] = vertex.effects[child][attr][v]
+                compound_expectations=copy.deepcopy(vertex.expectations.informed)
+                # if type(vertex) == type(action_type):
+                #     for attr in vertex.effects[child]:  # compound function
+                #         if attr not in compound_expectations:
+                #             compound_expectations[attr] = {}
+                #         for v in vertex.effects[child][attr]:
+                #             compound_expectations[attr][v] = vertex.effects[child][attr][v]
                 queue.put((child, compound_expectations))
 
     def gen_regression(self):
@@ -192,21 +221,22 @@ def get_vertex(node,num):
     return Vertex.vs[node][num]
 
 def gen_expectations(policy, starting_state):
-    print('here')
+    print('here',numerics)
     graph = Graph(starting_state, policy)
     print("finished graph")
     graph.print()
     graph.initialize_expectations()
     graph.gen_immediate()
     print("finished immediate")
-    # graph.gen_informed()
-    # print("finished informed")
+    graph.gen_informed()
+    print("finished informed")
     # graph.gen_regression()
     # print("finished regression")
     # graph.gen_goldilocks()
     # print("finished goldilocks")
     for state in policy:
         state.expectations.print()
+    test()
     # for state in graph.terminal_nodes:
     #     print(state.lit)
     #     state.expectations.print()
