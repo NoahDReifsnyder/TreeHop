@@ -7,7 +7,7 @@ from collections import defaultdict
 #nprecond={dict:{1:(denom:val)}}
 Geff=1
 err=.1
-ND=False #Action type
+ND=True #Action type
 
 
 
@@ -21,9 +21,6 @@ def stack(state, block1,block2):
         state.energy[1][0]-=(10+err)
         state.energy[1][1]-=(10-err)
         if ND:
-            if not state.clear[state.infront[loc]]:
-                return False
-            precond['clear'][state.infront[loc]]=1
             return ([state,state1],precond,)
         else:
             return ([state], precond,)
@@ -72,20 +69,23 @@ def find_tallest(state):
         
 def achieve_goal(state, n):
     size,top=find_tallest(state)
+    clear=copy.deepcopy(state.clear)
     n=n-size
     moves=[]
     used=[]
-    energy=state.energy[1]
+    energy=state.energy[1][0]
     for i in range(n):
-        energy=state.energy[1]
-        if energy[0]<10:
+        if energy<10:
             moves.append('recharge')
-        block=choice([block for block in state.clear if state.clear[block] and block!=top and block not in used])
+        block=choice([block for block in clear if clear[block] and block!=top and block not in used])
         if not state.clear[block]:
             print(str(block)+" IS NOT CLEAR")
         moves.append(('stack',block,top))
+        clear[top]=False
+        energy-=(10+err)
         top=block
         used.append(block)
+    print(moves)
     return moves
 
 treehop.declare_methods('achieve_goal',achieve_goal)

@@ -22,10 +22,7 @@ class Expectations(object):
 def o_plus(A, B):
     new_dict={}
     l=[x for x in B]+[x for x in A]
-    print(A)
-    print(B)
     l=set(l)
-    print(l)
     for x in l:
         new_dict[x]={}
         if x in B and x in A:
@@ -40,8 +37,6 @@ def o_plus(A, B):
         elif x in A:
             for key in A[x]:
                 new_dict[x][key] = A[x][key]
-    print(new_dict)
-    print('')
 
     return new_dict
 def o_minus(A, B):
@@ -64,13 +59,7 @@ class Graph(object):
         self.cross_edges = set()
         self.vertices = set()
         self.policy = policy
-        self.inverse_policy={}
         print(policy[starting_state].effects)
-        for state in policy:
-            for effect_state in policy[state].effects:
-                self.inverse_policy[effect_state]=policy[state]
-        for state in self.inverse_policy:
-            print(state)
         #self.inverse_policy = {v: k for k, v in policy.items()}
         self.build()
         self.add_back_edges()
@@ -137,41 +126,47 @@ class Graph(object):
             v.expectations = Expectations()
 
     def gen_immediate(self):
-        for v in self.policy:
-            if v == self.starting_state:
-                v.expectations.immediate=self.policy[v].precond
-            else:
-                v.expectations.immediate=o_plus(self.policy[v].precond,self.inverse_policy[v].effects[v])
-            self.policy[v].expectations.immediate=v.expectations.immediate
+        queue=Queue()
+        forward_only=self.edges-self.back_edges-self.cross_edges
+        queue.put((self.starting_state,self.starting_state))
+        action_type = Action()
+        while not queue.empty():
+            vertex, parent=queue.get()
+            if type(vertex)==type(action_type): #action, take from parent
+                vertex.expectations.immediate=copy.deepcopy(parent.expectations.immediate)
+            elif vertex == self.starting_state: #starting state, no prev effects
+                vertex.expectations.immediate=self.policy[vertex].precond
+            elif vertex in self.policy: #non terminal state
+                vertex.expectations.immediate=o_plus(self.policy[vertex].precond,parent.effects[vertex])
+            else: #terminal state
+                vertex.expectations.immediate=o_plus({},parent.effects[vertex]) #replace {} with goals if ever needed
+                pass
+            children = [x for (y, x) in forward_only if y == vertex]
+            for child in children:
+                queue.put((child, vertex))
 
     def gen_informed(self):
         forward_only = (self.edges - self.back_edges - self.cross_edges)
         queue = Queue()
-        queue.put((self.starting_state, {}))
+        queue.put((self.starting_state, self.starting_state))
         action_type = Action()
         while not queue.empty():
-            vertex, parent_expectations = queue.get()
+            vertex, parent = queue.get()
+            parent_expectations=parent.expectations.informed
             if type(vertex) == type(action_type):  # vertex=an Action
                 vertex.expectations.informed = copy.deepcopy(parent_expectations)
                 pass  # don't change parent_expectations, pass on to grandchildren of preceding state
             elif vertex==self.starting_state:
                 pass #starting state, null informed
             else:  # vertex != s_0 and is a state
-                vertex.expectations.informed = o_plus(self.inverse_policy[vertex].effects[vertex],copy.deepcopy(parent_expectations))
+                vertex.expectations.informed = o_plus(parent.effects[vertex],copy.deepcopy(parent_expectations))
                 pass
             children = [x for (y, x) in forward_only if y == vertex]
-            # print(vertex.expectations.informed)
             for child in children:
-                compound_expectations=copy.deepcopy(vertex.expectations.informed)
-                # if type(vertex) == type(action_type):
-                #     for attr in vertex.effects[child]:  # compound function
-                #         if attr not in compound_expectations:
-                #             compound_expectations[attr] = {}
-                #         for v in vertex.effects[child][attr]:
-                #             compound_expectations[attr][v] = vertex.effects[child][attr][v]
-                queue.put((child, compound_expectations))
+                queue.put((child, vertex))
 
     def gen_regression(self):
+
         expanded=Queue()
         for node in self.terminal_nodes:
             expanded.put(node)
@@ -186,10 +181,28 @@ class Graph(object):
                     expanded.put(edge[0])
         return
 
+
     def gen_goldilocks(self):
         return
 
-
+class Tau:
+    def gen_self(self):
+        graph=self.graph
+        q=Queue()
+        q.put(self.starting_state)
+        while not q.empty():
+            v=q.get()
+            put_vertex(v)
+            l=[edge[1] for edge in graph.edges if edge[0]==v]
+            for node in l:
+                q.put(node)
+        return
+    def __init__(self,graph):
+        self.graph=graph
+        self.starting_state=graph.starting_state
+        self.verticies=set()
+        self.gen_self()
+        return
 class Vertex:
     vs={}
     def __init__(self,node,num):
@@ -204,6 +217,15 @@ def get_vertex(node,num):
     if num not in Vertex.vs[node]:
         Vertex.vs[node][num]=Vertex(node,num)
     return Vertex.vs[node][num]
+def put_vertex(node):
+    if node not in Vertex.vs:
+        Vertex.vs[node]={}
+    num=len(Vertex.vs[node].keys())
+    Vertex.vs[node][num]=Vertex(node,num)
+
+def print_exp(policy):
+    for state in policy:
+        state.expectations.print()
 
 def gen_expectations(policy, starting_state):
     print('here',numerics)
@@ -215,15 +237,12 @@ def gen_expectations(policy, starting_state):
     print("finished immediate")
     graph.gen_informed()
     print("finished informed")
-    # graph.gen_regression()
-    # print("finished regression")
+    #tau=Tau(graph)
+    #graph.gen_regression(tau)
+    #print("finished regression")
     # graph.gen_goldilocks()
     # print("finished goldilocks")
-    for state in policy:
-        state.expectations.print()
-    # for state in graph.terminal_nodes:
-    #     print(state.lit)
-    #     state.expectations.print()
+    print_exp(policy)
     return
 
 
