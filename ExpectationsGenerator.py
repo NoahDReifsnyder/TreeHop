@@ -136,8 +136,6 @@ class Graph(object):
                 vertex.expectations.immediate=copy.deepcopy(parent.expectations.immediate)
             elif vertex == self.starting_state: #starting state, no prev effects
                 vertex.expectations.immediate=self.policy[vertex].precond
-            elif vertex in self.policy: #non terminal state
-                vertex.expectations.immediate=o_plus(self.policy[vertex].precond,parent.effects[vertex])
             else: #terminal state
                 vertex.expectations.immediate=o_plus({},parent.effects[vertex]) #replace {} with goals if ever needed
                 pass
@@ -189,39 +187,53 @@ class Tau:
     def gen_self(self):
         graph=self.graph
         q=Queue()
-        q.put(self.starting_state)
+        vertex=self.put_vertex(self.starting_state)
+        q.put((vertex,set()))
         while not q.empty():
-            v=q.get()
-            put_vertex(v)
-            l=[edge[1] for edge in graph.edges if edge[0]==v]
-            for node in l:
-                q.put(node)
+            last_vertex,expanded_be=q.get()
+            l=[]
+            node=last_vertex.node
+            for edge in graph.edges-expanded_be:
+                if edge[0]==node:
+                    new_expanded_be=expanded_be
+                    if edge in graph.back_edges:
+                        new_expanded_be.add(edge)
+                    vertex = self.put_vertex(edge[1])
+                    self.edges.add((last_vertex,vertex))
+                    q.put((vertex,new_expanded_be))
+                pass
         return
+
+    def get_vertex(self, node, num):
+        if node not in self.vs:
+            self.vs[node] = {}
+        if num not in self.vs[node]:
+            self.vs[node][num] = Vertex(node, num)
+        return self.vs[node][num]
+
+    def put_vertex(self, node):
+        if node not in self.vs:
+            self.vs[node] = {}
+        num = len(self.vs[node].keys())
+        self.vs[node][num] = Vertex(node, num)
+        return self.vs[node][num]
+
     def __init__(self,graph):
         self.graph=graph
         self.starting_state=graph.starting_state
         self.verticies=set()
+        self.vs={}
+        self.edges=set()
         self.gen_self()
         return
 class Vertex:
-    vs={}
     def __init__(self,node,num):
         self.node=node
         self.num=num
         self.type=type(node)
     def __str__(self):
         return str(self.node)+","+str(self.num)
-def get_vertex(node,num):
-    if node not in Vertex.vs:
-        Vertex.vs[node]={}
-    if num not in Vertex.vs[node]:
-        Vertex.vs[node][num]=Vertex(node,num)
-    return Vertex.vs[node][num]
-def put_vertex(node):
-    if node not in Vertex.vs:
-        Vertex.vs[node]={}
-    num=len(Vertex.vs[node].keys())
-    Vertex.vs[node][num]=Vertex(node,num)
+
 
 def print_exp(policy):
     for state in policy:
@@ -237,12 +249,12 @@ def gen_expectations(policy, starting_state):
     print("finished immediate")
     graph.gen_informed()
     print("finished informed")
-    #tau=Tau(graph)
+    tau=Tau(graph)
     #graph.gen_regression(tau)
     #print("finished regression")
     # graph.gen_goldilocks()
     # print("finished goldilocks")
-    print_exp(policy)
+    #print_exp(policy)
     return
 
 
