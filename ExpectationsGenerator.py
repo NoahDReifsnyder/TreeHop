@@ -6,7 +6,7 @@ import time
 
 class Reg(object):
     def __init__(self):
-        self.exp={} 
+        self.exp={}
 
 class Expectations(object):
     def __init__(self):
@@ -37,18 +37,57 @@ def o_plus(A, B):
         elif x in A:
             for key in A[x]:
                 new_dict[x][key] = A[x][key]
-
     return new_dict
+
 def o_minus(A, B):
     new_dict={}
     l=[x for x in A if x not in B]
     for x in l:
         new_dict[x]=A[x]
     return new_dict
+
 def o_divide(A, k):
-    return
+    new_dict={}
+    for key in A:
+        new_dict[key]={}
+        for val in A[key]:
+            new_dict[key][val]={}
+            for c in A[key][val]:
+                new_dict[key][val][c]=A[key][val][c]/k
+    return new_dict
+
 def o_times(A,B):
-    return
+    new_dict = {}
+    l = [x for x in B] + [x for x in A]
+    l = set(l)
+    for x in l:
+        new_dict[x] = {}
+        if x in B and x in A:
+            BKeys = [y for y in B[x] if y not in A[x]]
+            AKeys = [y for y in A[x] if y not in B[x]]
+            CombKeys = [y for y in A[x] if y in B[x]]
+            for key in BKeys:
+                new_dict[x][key] = B[x][key]
+            for key in AKeys:
+                new_dict[x][key] = A[x][key]
+            for key in CombKeys:
+                new_dict[x][key]={}
+                AVals=[y for y in A[x][key] if y not in B[x][key]]
+                BVals=[y for y in B[x][key] if y not in A[x][key]]
+                CombVals=[y for y in A[x][key] if y in B[x][key]]
+                for val in AVals:
+                    new_dict[x][key][val]=A[x][key][val]
+                for val in BVals:
+                    new_dict[x][key][val]=B[x][key][val]
+                for val in CombVals:
+                    new_dict[x][key][val]=A[x][key][val]+B[x][key][val]
+        elif x in B:
+            for key in B[x]:
+                new_dict[x][key] = B[x][key]
+        elif x in A:
+            for key in A[x]:
+                new_dict[x][key] = A[x][key]
+    return new_dict
 
 class Graph(object):
     def __init__(self,starting_state,policy):
@@ -59,8 +98,6 @@ class Graph(object):
         self.cross_edges = set()
         self.vertices = set()
         self.policy = policy
-        print(policy[starting_state].effects)
-        #self.inverse_policy = {v: k for k, v in policy.items()}
         self.build()
         self.add_back_edges()
 
@@ -163,45 +200,89 @@ class Graph(object):
             for child in children:
                 queue.put((child, vertex))
 
-    def gen_regression(self):
-
-        expanded=Queue()
-        for node in self.terminal_nodes:
-            expanded.put(node)
-        expanded_edges=set()
-        count=0
-        while not expanded.empty():
-            node=expanded.get()
-            for edge in self.edges-expanded_edges:
-                if edge[1]==node:
-                    if edge in self.back_edges or edge in self.cross_edges:
-                        expanded_edges.add(edge)
-                    expanded.put(edge[0])
-        return
-
-
-    def gen_goldilocks(self):
-        return
-
 class Tau:
+    def gen_regression(self):
+        q=Queue()
+        action_type=type(Action())
+        for vertex in self.terminal:
+            q.put(vertex)
+        while not q.empty():
+            vertex=q.get()
+            if type(vertex.node) == action_type:
+                vertex.precond={}
+                for key in vertex.node.precond:
+                    vertex.precond[key] = {}
+                    for c in vertex.node.precond[key]:
+                        vertex.precond[key][c] = 1
+            if vertex in self.terminal:
+                pass
+            if vertex.finished():
+                parents=[x for (x,y) in self.edges if y == vertex]
+                for parent in parents:
+                    print(parent)
+                    q.put(parent)
+
     def gen_self(self):
         graph=self.graph
         q=Queue()
         vertex=self.put_vertex(self.starting_state)
         q.put((vertex,set()))
+        test=set()
+        print(len(graph.back_edges))
         while not q.empty():
             last_vertex,expanded_be=q.get()
-            l=[]
+            print(last_vertex,expanded_be)
             node=last_vertex.node
-            for edge in graph.edges-expanded_be:
+            print(node)
+            if node in self.graph.terminal_nodes:
+                self.terminal.add(last_vertex)
+            print(self.terminal)
+            for edge in expanded_be:
+                if edge not in self.graph.back_edges:
+                    print(edge)
+                    time.sleep(10)
+            for edge in self.graph.edges-expanded_be:
                 if edge[0]==node:
-                    new_expanded_be=expanded_be
-                    if edge in graph.back_edges:
+                    new_expanded_be = copy.deepcopy(expanded_be)
+                    print(new_expanded_be == expanded_be)
+                    if edge in self.graph.back_edges:
                         new_expanded_be.add(edge)
-                    vertex = self.put_vertex(edge[1])
-                    self.edges.add((last_vertex,vertex))
+                        print(edge, edge in self.graph.back_edges)
+                    vertex=self.put_vertex(edge[1])
                     q.put((vertex,new_expanded_be))
-                pass
+            # last_vertex,expanded_be=q.get()
+            # if len(expanded_be)> len(graph.back_edges):
+            #     print("how")
+            #     print(expanded_be)
+            #     print(graph.back_edges)
+            #     for edge in test:
+            #         print(edge in expanded_be)
+            #         #print(edge in graph.back_edges)
+            #     time.sleep(10)
+            # node=last_vertex.node
+            # if node in self.graph.terminal_nodes:
+            #     self.terminal.add(last_vertex)
+            # for edge in graph.edges-expanded_be:
+            #     if edge[0]==node:
+            #         new_expanded_be=copy.deepcopy(expanded_be)
+            #         temp=[(x,y) for (x,y) in graph.back_edges if (x,y)==(edge[0],edge[1])]
+            #         if edge in graph.back_edges:
+            #             for t in temp:
+            #                 for e in graph.back_edges:
+            #                     if e[1] == t[1] and e[0] == t[0]:
+            #                         print(e,t)
+            #                         test.add(e)
+            #                         new_expanded_be.add(e)
+            #                         print(e in new_expanded_be)
+            #         vertex = self.put_vertex(edge[1])
+            #         self.edges.add((last_vertex,vertex))
+            #         q.put((vertex,copy.deepcopy(new_expanded_be)))
+            #     pass
+        for node in self.vs:
+            for num in self.vs[node]:
+                vertex=self.vs[node][num]
+                vertex.children=len([x for (x,y) in self.edges if x == vertex])
+                #print(vertex,vertex.children)
         return
 
     def get_vertex(self, node, num):
@@ -221,6 +302,7 @@ class Tau:
     def __init__(self,graph):
         self.graph=graph
         self.starting_state=graph.starting_state
+        self.terminal=set()
         self.verticies=set()
         self.vs={}
         self.edges=set()
@@ -230,10 +312,14 @@ class Vertex:
     def __init__(self,node,num):
         self.node=node
         self.num=num
+        self.children=0
+        self.added=0
         self.type=type(node)
+        self.expectations=Expectations()
     def __str__(self):
         return str(self.node)+","+str(self.num)
-
+    def finished(self):
+        return False
 
 def print_exp(policy):
     for state in policy:
@@ -250,7 +336,7 @@ def gen_expectations(policy, starting_state):
     graph.gen_informed()
     print("finished informed")
     tau=Tau(graph)
-    #graph.gen_regression(tau)
+    #tau.gen_regression()
     #print("finished regression")
     # graph.gen_goldilocks()
     # print("finished goldilocks")
