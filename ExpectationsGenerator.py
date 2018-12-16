@@ -280,9 +280,6 @@ class Tau:
                                 vertex.effects[node][key][c] = {}
                                 vertex.effects[node][key][c][vertex.node.effects[node][key][c]]=1
                     vertex.precond=copy.deepcopy(vertex.expectations.regression)
-                    print(vertex.effects)
-                    print(vertex.precond)
-                    time.sleep(10)
                 vertex.children=len([x for (x,y) in self.edges if x == vertex])
         return
 

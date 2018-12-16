@@ -18,8 +18,7 @@ def stack(state, block1,block2):
         precond={'clear':{block1:True, block2:True},'energy':{1:(10,'inf')}}
         state.on[block1] = block2
         state.clear[block2]=False
-        state.energy[1][0]-=(10+err)
-        state.energy[1][1]-=(10-err)
+        state.energy[1]=(state.energy[1][0]-(10+err),state.energy[1][1]-(10-err))
         if ND:
             return ([state,state1],precond,)
         else:
