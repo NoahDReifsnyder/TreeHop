@@ -265,12 +265,24 @@ class Tau:
         for node in self.vs:
             for num in self.vs[node]:
                 vertex = self.vs[node][num]
+                vertex.effects={}
                 if type(vertex.node) == action_type:
                     for key in vertex.node.precond:
                         vertex.expectations.regression[key] = {}
                         for c in vertex.node.precond[key]:
-                            vertex.expectations.regression[key][c] = 1
+                            vertex.expectations.regression[key][c] = {}
+                            vertex.expectations.regression[key][c][vertex.node.precond[key][c]]=1
+                    for node in vertex.node.effects:
+                        vertex.effects[node] = {}
+                        for key in vertex.node.effects[node]:
+                            vertex.effects[node][key] = {}
+                            for c in vertex.node.effects[node][key]:
+                                vertex.effects[node][key][c] = {}
+                                vertex.effects[node][key][c][vertex.node.effects[node][key][c]]=1
                     vertex.precond=copy.deepcopy(vertex.expectations.regression)
+                    print(vertex.effects)
+                    print(vertex.precond)
+                    time.sleep(10)
                 vertex.children=len([x for (x,y) in self.edges if x == vertex])
         return
 
