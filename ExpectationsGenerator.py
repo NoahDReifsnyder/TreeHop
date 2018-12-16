@@ -202,12 +202,16 @@ class Graph(object):
 
 class Tau:
     def gen_regression(self):
+        print(len(self.edges))
+        print(self.terminal)
         q=Queue()
         action_type=type(Action())
         for vertex in self.terminal:
+            print(vertex)
             q.put(vertex)
         while not q.empty():
             vertex=q.get()
+            print(vertex)
             if type(vertex.node) == action_type:
                 vertex.precond={}
                 for key in vertex.node.precond:
@@ -223,66 +227,28 @@ class Tau:
                     q.put(parent)
 
     def gen_self(self):
-        graph=self.graph
         q=Queue()
         vertex=self.put_vertex(self.starting_state)
         q.put((vertex,set()))
-        test=set()
-        print(len(graph.back_edges))
         while not q.empty():
             last_vertex,expanded_be=q.get()
-            print(last_vertex,expanded_be)
             node=last_vertex.node
-            print(node)
             if node in self.graph.terminal_nodes:
                 self.terminal.add(last_vertex)
-            print(self.terminal)
-            for edge in expanded_be:
-                if edge not in self.graph.back_edges:
-                    print(edge)
-                    time.sleep(10)
             for edge in self.graph.edges-expanded_be:
                 if edge[0]==node:
-                    new_expanded_be = copy.deepcopy(expanded_be)
-                    print(new_expanded_be == expanded_be)
+                    new_expanded_be = set()
+                    for e in expanded_be:
+                        new_expanded_be.add(e)
                     if edge in self.graph.back_edges:
                         new_expanded_be.add(edge)
-                        print(edge, edge in self.graph.back_edges)
                     vertex=self.put_vertex(edge[1])
+                    self.edges.add((last_vertex,vertex))
                     q.put((vertex,new_expanded_be))
-            # last_vertex,expanded_be=q.get()
-            # if len(expanded_be)> len(graph.back_edges):
-            #     print("how")
-            #     print(expanded_be)
-            #     print(graph.back_edges)
-            #     for edge in test:
-            #         print(edge in expanded_be)
-            #         #print(edge in graph.back_edges)
-            #     time.sleep(10)
-            # node=last_vertex.node
-            # if node in self.graph.terminal_nodes:
-            #     self.terminal.add(last_vertex)
-            # for edge in graph.edges-expanded_be:
-            #     if edge[0]==node:
-            #         new_expanded_be=copy.deepcopy(expanded_be)
-            #         temp=[(x,y) for (x,y) in graph.back_edges if (x,y)==(edge[0],edge[1])]
-            #         if edge in graph.back_edges:
-            #             for t in temp:
-            #                 for e in graph.back_edges:
-            #                     if e[1] == t[1] and e[0] == t[0]:
-            #                         print(e,t)
-            #                         test.add(e)
-            #                         new_expanded_be.add(e)
-            #                         print(e in new_expanded_be)
-            #         vertex = self.put_vertex(edge[1])
-            #         self.edges.add((last_vertex,vertex))
-            #         q.put((vertex,copy.deepcopy(new_expanded_be)))
-            #     pass
         for node in self.vs:
             for num in self.vs[node]:
                 vertex=self.vs[node][num]
                 vertex.children=len([x for (x,y) in self.edges if x == vertex])
-                #print(vertex,vertex.children)
         return
 
     def get_vertex(self, node, num):
@@ -336,7 +302,7 @@ def gen_expectations(policy, starting_state):
     graph.gen_informed()
     print("finished informed")
     tau=Tau(graph)
-    #tau.gen_regression()
+    tau.gen_regression()
     #print("finished regression")
     # graph.gen_goldilocks()
     # print("finished goldilocks")
