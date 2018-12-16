@@ -40,10 +40,20 @@ def o_plus(A, B):
     return new_dict
 
 def o_minus(A, B):
+    #print()
+    #print(A,B)
     new_dict={}
     l=[x for x in A if x not in B]
     for x in l:
         new_dict[x]=A[x]
+    l=[x for x in A if x in B]
+    for x in l:
+        new_dict[x]={}
+        l2=[y for y in A[x] if y not in B[x]]
+        for y in l2:
+            new_dict[x][y]=A[x][y]
+    #print(new_dict)
+    #print()
     return new_dict
 
 def o_divide(A, k):
@@ -57,6 +67,8 @@ def o_divide(A, k):
     return new_dict
 
 def o_times(A,B):
+    print()
+    print(A,B)
     new_dict = {}
     l = [x for x in B] + [x for x in A]
     l = set(l)
@@ -87,6 +99,8 @@ def o_times(A,B):
         elif x in A:
             for key in A[x]:
                 new_dict[x][key] = A[x][key]
+    print(new_dict)
+    print()
     return new_dict
 
 class Graph(object):
@@ -202,29 +216,31 @@ class Graph(object):
 
 class Tau:
     def gen_regression(self):
-        print(len(self.edges))
-        print(self.terminal)
         q=Queue()
         action_type=type(Action())
         for vertex in self.terminal:
             print(vertex)
-            q.put(vertex)
+            q.put((vertex,{},None))
         while not q.empty():
-            vertex=q.get()
+            vertex,regression,last_vertex=q.get()
             print(vertex)
-            if type(vertex.node) == action_type:
-                vertex.precond={}
-                for key in vertex.node.precond:
-                    vertex.precond[key] = {}
-                    for c in vertex.node.precond[key]:
-                        vertex.precond[key][c] = 1
-            if vertex in self.terminal:
-                pass
+            if type(vertex.node)==action_type:
+                print(hasattr(vertex,"precond"))
+                print("action",vertex.children)
+                new=(o_minus(o_minus(regression,vertex.node.effects[last_vertex.node]),vertex.precond))
+                vertex.expectations.regression=o_times(vertex.expectations.regression,new)
+                vertex.added+=1
+            elif vertex not in self.terminal:
+                print("state",vertex.children)
+                vertex.expectations.regression=regression
+                vertex.added+=1
             if vertex.finished():
                 parents=[x for (x,y) in self.edges if y == vertex]
                 for parent in parents:
                     print(parent)
-                    q.put(parent)
+                    q.put((parent,copy.deepcopy(vertex.expectations.regression),vertex))
+        for node in self.vs:
+            node.expectations.regression=copy.deepcopy(self.vs[node][0].expectations.regression)
 
     def gen_self(self):
         q=Queue()
@@ -245,9 +261,16 @@ class Tau:
                     vertex=self.put_vertex(edge[1])
                     self.edges.add((last_vertex,vertex))
                     q.put((vertex,new_expanded_be))
+        action_type=type(Action())
         for node in self.vs:
             for num in self.vs[node]:
-                vertex=self.vs[node][num]
+                vertex = self.vs[node][num]
+                if type(vertex.node) == action_type:
+                    for key in vertex.node.precond:
+                        vertex.expectations.regression[key] = {}
+                        for c in vertex.node.precond[key]:
+                            vertex.expectations.regression[key][c] = 1
+                    vertex.precond=copy.deepcopy(vertex.expectations.regression)
                 vertex.children=len([x for (x,y) in self.edges if x == vertex])
         return
 
@@ -285,7 +308,11 @@ class Vertex:
     def __str__(self):
         return str(self.node)+","+str(self.num)
     def finished(self):
-        return False
+        print(self.children,self.added)
+        if self.children == self.added:
+            return True
+        else:
+            return False
 
 def print_exp(policy):
     for state in policy:
@@ -306,7 +333,7 @@ def gen_expectations(policy, starting_state):
     #print("finished regression")
     # graph.gen_goldilocks()
     # print("finished goldilocks")
-    #print_exp(policy)
+    print_exp(policy)
     return
 
 
