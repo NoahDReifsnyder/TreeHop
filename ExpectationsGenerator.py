@@ -213,7 +213,8 @@ class Graph(object):
             children = [x for (y, x) in forward_only if y == vertex]
             for child in children:
                 queue.put((child, vertex))
-
+seen=set()
+created=set()
 class Tau:
     def gen_regression(self):
         q=Queue()
@@ -225,8 +226,8 @@ class Tau:
             vertex,regression,last_vertex=q.get()
             print(vertex)
             if type(vertex.node)==action_type:
-                print(hasattr(vertex,"precond"))
                 print("action",vertex.children)
+                l=[y for (x,y) in self.edges if x == vertex]
                 new=(o_minus(o_minus(regression,vertex.node.effects[last_vertex.node]),vertex.precond))
                 vertex.expectations.regression=o_times(vertex.expectations.regression,new)
                 vertex.added+=1
@@ -234,7 +235,10 @@ class Tau:
                 print("state",vertex.children)
                 vertex.expectations.regression=regression
                 vertex.added+=1
+            else:
+                print("terminal state")
             if vertex.finished():
+                vertex.expectations.regression=o_divide(vertex.expectations.regression,vertex.children)
                 parents=[x for (x,y) in self.edges if y == vertex]
                 for parent in parents:
                     print(parent)
@@ -265,6 +269,7 @@ class Tau:
         for node in self.vs:
             for num in self.vs[node]:
                 vertex = self.vs[node][num]
+                seen.add(vertex)
                 vertex.effects={}
                 if type(vertex.node) == action_type:
                     for key in vertex.node.precond:
@@ -272,15 +277,16 @@ class Tau:
                         for c in vertex.node.precond[key]:
                             vertex.expectations.regression[key][c] = {}
                             vertex.expectations.regression[key][c][vertex.node.precond[key][c]]=1
-                    for node in vertex.node.effects:
-                        vertex.effects[node] = {}
-                        for key in vertex.node.effects[node]:
-                            vertex.effects[node][key] = {}
-                            for c in vertex.node.effects[node][key]:
-                                vertex.effects[node][key][c] = {}
-                                vertex.effects[node][key][c][vertex.node.effects[node][key][c]]=1
+                    for eff_node in vertex.node.effects:
+                        vertex.effects[eff_node] = {}
+                        for key in vertex.node.effects[eff_node]:
+                            vertex.effects[eff_node][key] = {}
+                            for c in vertex.node.effects[eff_node][key]:
+                                vertex.effects[eff_node][key][c] = {}
+                                vertex.effects[eff_node][key][c][vertex.node.effects[eff_node][key][c]]=1
                     vertex.precond=copy.deepcopy(vertex.expectations.regression)
-                vertex.children=len([x for (x,y) in self.edges if x == vertex])
+                vertex.children=len([y for (x,y) in self.edges if x == vertex])
+                vertex.set=True
         return
 
     def get_vertex(self, node, num):
@@ -295,6 +301,7 @@ class Tau:
             self.vs[node] = {}
         num = len(self.vs[node].keys())
         self.vs[node][num] = Vertex(node, num)
+        created.add(self.vs[node][num])
         return self.vs[node][num]
 
     def __init__(self,graph):
@@ -313,11 +320,11 @@ class Vertex:
         self.children=0
         self.added=0
         self.type=type(node)
+        self.set=False
         self.expectations=Expectations()
     def __str__(self):
         return str(self.node)+","+str(self.num)
     def finished(self):
-        print(self.children,self.added)
         if self.children == self.added:
             return True
         else:
@@ -342,7 +349,7 @@ def gen_expectations(policy, starting_state):
     #print("finished regression")
     # graph.gen_goldilocks()
     # print("finished goldilocks")
-    print_exp(policy)
+    #print_exp(policy)
     return
 
 

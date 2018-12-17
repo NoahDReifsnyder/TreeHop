@@ -7,7 +7,7 @@ from collections import defaultdict
 #nprecond={dict:{1:(denom:val)}}
 Geff=1
 err=.1
-ND=False #Action type
+ND=True #Action type
 
 
 
