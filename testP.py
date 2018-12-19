@@ -51,7 +51,7 @@ policy=treehop.pyhopT(state, goals,True)
 treehop.print_policy(policy,state)
 test1={'energy':{1:{2:.5, 3:.5}}}
 test2={'energy':{1:{2:.5, 3:.5}}}
-print(o_divide(o_times(test1,test2),2))
+#print(o_divide(o_times(test1,test2),2))
 gen_expectations(policy, state)
 #treehop.print_plan_dfs(actions)
 #print_plan(Plan,exp='Rexp')
