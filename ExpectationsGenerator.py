@@ -307,6 +307,36 @@ class Tau:
                 for parent in parents:
                     q.put((parent, copy.deepcopy(getattr(vertex.expectations, exp_type)), vertex))
         for node in self.vs:
+            if exp_type == "goldilocks":
+                vertex = self.vs[node][0]
+                vertex.expectations.informed = copy.deepcopy(vertex.node.expectations.informed)
+                keys = set([x for x in vertex.expectations.informed] + [x for x in vertex.expectations.regression])
+                for key in keys: # TODO: maybe a better way to do this? it works and it flows quick so maybe leave
+                    if key not in node.expectations.goldilocks:
+                        node.expectations.goldilocks[key] = {}
+                    if key in vertex.expectations.regression:
+                        if key in vertex.expectations.informed:
+                            # key in both
+                            vals = set([x for x in vertex.expectations.informed[key]] + [x for x in vertex.expectations.regression[key]])
+                            for val in vals:
+                                if val in vertex.expectations.regression[key]:
+                                    if val in vertex.expectations.informed[key]:
+                                        # val in both
+                                        vertex.expectations.goldilocks[key][val] = (vertex.expectations.informed[key][val], vertex.expectations.regression[key][val])
+                                    else:
+                                        vertex.expectations.goldilocks[key][val] = (None, vertex.expectations.regression[key][val])
+                                        # val only in regression
+                                elif val in vertex.expectations.informed:
+                                    # val only in informed
+                                    vertex.expectations.goldilocks[key][val] = (vertex.expectations.informed[key][val], None)
+                        else:
+                            # key in only regression
+                            for val in vertex.expectations.regression[key]:
+                                vertex.expectations.goldilocks[key][val] = (None, vertex.expectations.regression[key][val])
+                    elif key in vertex.expectations.informed:
+                        # key in only informed
+                        for val in vertex.expectations.informed[key]:
+                            vertex.expectations.goldilocks[key][val] = (vertex.expectations.informed[key][val], None)
             setattr(node.expectations, exp_type, copy.deepcopy(getattr(self.vs[node][0].expectations, exp_type)))
             for num in self.vs[node]:
                 self.vs[node][num].added = 0
