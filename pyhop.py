@@ -56,9 +56,6 @@ Pyhop provides the following classes and functions:
 - if verbose = 2, it also prints a message on each recursive call;
 - if verbose = 3, it also prints info about what it's computing.
 """
-
-#####TODO: AHA CONTINUOUS EFFECTS
-
 # Pyhop's planning algorithm is very similar to the one in SHOP and JSHOP
 # (see http://www.cs.umd.edu/projects/shop). Like SHOP and JSHOP, Pyhop uses
 # HTN methods to decompose tasks into smaller and smaller subtasks, until it
@@ -97,99 +94,115 @@ Pyhop provides the following classes and functions:
 # or "import simple_travel_example".
 
 
-from __future__ import print_function
-import copy,sys, pprint
+import copy
+import sys
+
 
 ############################################################
 # States and goals
-class Action():
-    def __init__(self,name="Default",state=None):
-        self.name=name
-        self.children=[]
-        self.effects={}
-        self.precond={}
-        self.nprecond={}
-        self.state=state
-counter=0
-class State():
+class Action:
+    def __init__(self, name="Default", state=None):
+        self.name = name
+        self.children = []
+        self.effects = {}
+        self.preconditions = {}
+        self.n_preconditions = {}
+        self.state = state
+
+
+counter = 0
+
+
+class State:
     """A state is just a collection of variable bindings."""
     """NEED TO BE ALL DICTIONARIES"""
-    def __init__(self,name):
+    def __init__(self, name):
         global counter
         self.__name__ = name
-        self._num=counter
-        counter+=1
-    def get_diff(self,otherState):
-        diff={}
-        def addDiff(attr,var,val):
-            if attr not in diff:
-                diff[attr]={}
-            diff[attr][var]=val
+        self._num = counter
+        counter += 1
+
+    def get_diff(self, other_state):
+        diff = {}
+
+        def add_diff(t_attr, t_var, t_val):
+            if t_attr not in diff:
+                diff[t_attr] = {}
+            diff[t_attr][t_var] = t_val
         for attr in vars(self):
-            if attr[0]=="_":
+            if attr[0] == "_":
                 continue
-            for var in getattr(self,attr):
-                val=getattr(self,attr)[var]
-                if var not in getattr(otherState,attr) or getattr(otherState,attr)[var]!=val:
-                    addDiff(attr,var,val)
+            for var in getattr(self, attr):
+                val = getattr(self, attr)[var]
+                if var not in getattr(other_state, attr) or getattr(other_state, attr)[var] != val:
+                    add_diff(attr, var, val)
         return diff
-    def __eq__(self, otherState):
-        if not type(self) == type(otherState):
+
+    def __eq__(self, other_state):
+        if not type(self) == type(other_state):
             return False
         for attr in vars(self):
             try:
-                iter(getattr(self,attr)) #for when expecation object is added to states later, it isn't iterable and thus crashes eq function
-            except:
+                iter(getattr(self, attr))  # for when expecation object is added to states later
+            except TypeError:
                 continue
-            if attr[0]=="_":
+            if attr[0] == "_":
                 continue
-            for var in getattr(self,attr):
-                val=getattr(self,attr)[var]
-                if var not in getattr(otherState,attr) or getattr(otherState,attr)[var]!=val:
+            for var in getattr(self, attr):
+                val = getattr(self, attr)[var]
+                if var not in getattr(other_state, attr) or getattr(other_state, attr)[var] != val:
                     return False
         return True
+
     def __hash__(self):
         return self._num
+
     def __copy__(self):
         global counter
-        newstate=copy.deepcopy(self)
-        newstate._num=counter
-        counter+=1
+        newstate = copy.deepcopy(self)
+        newstate._num = counter
+        counter += 1
         return newstate
 
-class Goal():
+
+class Goal:
     """A goal is just a collection of variable bindings."""
-    def __init__(self,name):
+    def __init__(self, name):
         self.__name__ = name
 
 
-### print_state and print_goal are identical except for the name
-
-def print_state(state,indent=4):
+# print_state and print_goal are identical except for the name
+def print_state(state, indent=4):
     """Print each variable in state, indented by indent spaces."""
-    if state != False:
-        for (name,val) in vars(state).items():
+    if state is not False:
+        for (name, val) in vars(state).items():
             if name != '__name__':
-                for x in range(indent): sys.stdout.write(' ')
+                for x in range(indent):
+                    sys.stdout.write(' ')
                 sys.stdout.write(state.__name__ + '.' + name)
                 print(' =', val)
-    else: print('False')
+    else:
+        print('False')
 
-def print_goal(goal,indent=4):
+
+def print_goal(goal, indent=4):
     """Print each variable in goal, indented by indent spaces."""
-    if goal != False:
-        for (name,val) in vars(goal).items():
+    if goal is not False:
+        for (name, val) in vars(goal).items():
             if name != '__name__':
-                for x in range(indent): sys.stdout.write(' ')
+                for x in range(indent):
+                    sys.stdout.write(' ')
                 sys.stdout.write(goal.__name__ + '.' + name)
                 print(' =', val)
-    else: print('False')
+    else:
+        print('False')
 
-def print_policy(policy, state, depth=[], tracker=[], tab=0): #Needs work,incorrect
+
+def print_policy(policy, state, depth=list(), tracker=list()):  # Needs work,incorrect
     if state not in policy:
         for x in depth:
             print(str(x) + " ", end="")
-        print("Goal",end="\n\n\n")
+        print("Goal", end="\n\n\n")
         return
     if state in tracker:
         for x in depth:
@@ -197,182 +210,155 @@ def print_policy(policy, state, depth=[], tracker=[], tab=0): #Needs work,incorr
         print(tracker.index(state))
         return
     tracker.append(state)
-    action=policy[state]
+    action = policy[state]
     depth.append(tracker.index(state))
     for x in depth:
-        print(str(x)+" ",end="")
+        print(str(x)+" ", end="")
     print(action.name)
     for child in action.children:
         print_policy(policy, child, depth=depth, tracker=tracker)
 
     depth.remove(tracker.index(state))
 
+
 ############################################################
 # Helper functions that may be useful in domain models
-
-def forall(seq,cond):
+def forall(seq, cond):
     """True if cond(x) holds for all x in seq, otherwise False."""
     for x in seq:
-        if not cond(x): return False
+        if not cond(x):
+            return False
     return True
 
-def find_if(cond,seq):
+
+def find_if(cond, seq):
     """
     Return the first x in seq such that cond(x) holds, if there is one.
     Otherwise return None.
     """
     for x in seq:
-        if cond(x): return x
+        if cond(x):
+            return x
     return None
+
 
 ############################################################
 # Commands to tell Pyhop what the operators and methods are
-
 operators = {}
 methods = {}
-numerics = set()
-goals = set()
+goals = []
+
 
 def declare_goals(goal_list):
     for goal in goal_list:
-        goals.add(goal)
+        goals.append(goal)
     return
+
 
 def declare_operators(*op_list):
     """
     Call this after defining the operators, to tell Pyhop what they are. 
     op_list must be a list of functions, not strings.
     """
-    operators.update({op.__name__:op for op in op_list})
+    operators.update({op.__name__: op for op in op_list})
     return operators
 
-def declare_methods(task_name,*method_list):
+
+def declare_methods(task_name, *method_list):
     """
     Call this once for each task, to tell Pyhop what the methods are.
     task_name must be a string.
     method_list must be a list of functions, not strings.
     """
-    methods.update({task_name:list(method_list)})
+    methods.update({task_name: list(method_list)})
     return methods[task_name]
 
-def declare_numeric(dict_name):
-     numerics.add(dict_name)
 
 ############################################################
 # Commands to find out what the operators and methods are
-
-def print_operators(olist=operators):
+def print_operators(op_list=operators):
     """Print out the names of the operators"""
-    print('OPERATORS:', ', '.join(olist))
+    print('OPERATORS:', ', '.join(op_list))
 
-def print_methods(mlist=methods):
+
+def print_methods(m_list=methods):
     """Print out a table of what the methods are for each task"""
-    print('{:<14}{}'.format('TASK:','METHODS:'))
-    for task in mlist:
-        print('{:<14}'.format(task) + ', '.join([f.__name__ for f in mlist[task]]))
+    print('{:<14}{}'.format('TASK:', 'METHODS:'))
+    for task in m_list:
+        print('{:<14}'.format(task) + ', '.join([f.__name__ for f in m_list[task]]))
+
 
 ############################################################
 # The actual planner
+verticies = []
+Policy = {}
 
-verticies=[]
-Policy={}
-def pyhopT(state,tasks,originalCall=False):
+
+def pyhop_t(state, tasks, original_call=False):
     """
     Try to find a plan that accomplishes tasks in state. 
     If successful, return the plan. Otherwise return False.
     """
-    result = seek_plan(state,tasks) #result holds True or False if planner succeeds or fails
-    if originalCall:
+    result = seek_plan(state, tasks)  # result holds True or False if planner succeeds or fails
+    if original_call:
         return Policy
     return result
 
-def seek_plan(state,tasks):
+
+def seek_plan(state, tasks):
     """
     Workhorse for pyhop. state and tasks are as in pyhop.
     - plan is the current partial plan.
     - depth is the recursion depth, for use in debugging
     - verbose is whether to print debugging messages
     """
-    if tasks == []:
+    if tasks == list():
         return True
     task1 = tasks[0]
     if task1[0] in operators:
+        solution = False
         verticies.append(state)
         operator = operators[task1[0]]
-        opreturn= operator(copy.copy(state),*task1[1:])
-        newstates=opreturn[0]
-        firststate=newstates[0]
-        if len(newstates)>1:
-            otherstates=newstates[1:]
-        else:
-            otherstates=[]
-        precond=opreturn[1]
-        action=Action(name=task1, state=state)
-        Policy[state]=action
-        action.precond=precond
-        children=[]
-
-        for i in range(len(newstates)):
-            newstate=newstates[i]
+        op_return = operator(copy.copy(state), *task1[1:])
+        new_states = op_return[0]
+        first_state = new_states[0]
+        preconditions = op_return[1]
+        action = Action(name=task1, state=state)
+        Policy[state] = action
+        action.preconditions = preconditions
+        children = []
+        for i in range(len(new_states)):
+            new_state = new_states[i]
             found = False
-            for oldstate in verticies:
-                if oldstate == newstate:
-                    children.append(oldstate)
-                    action.effects[oldstate] = oldstate.get_diff(state)
+            for old_state in verticies:
+                if old_state == new_state:
+                    children.append(old_state)
+                    action.effects[old_state] = old_state.get_diff(state)
                     found = True
                     solution = True
                     break
             if not found:
-                if newstate==firststate:
-                    solution = seek_plan(newstate, tasks[1:])
-                    if solution != False:
-                        children.append(newstate)
-                        action.effects[newstate] = newstate.get_diff(state)
+                if new_state == first_state:
+                    solution = seek_plan(new_state, tasks[1:])
+                    if solution is not False:
+                        children.append(new_state)
+                        action.effects[new_state] = new_state.get_diff(state)
                 else:
-                    result = pyhopT(newstate, goals)
+                    result = pyhop_t(new_state, goals)
                     if result:
-                        children.append(newstate)
-                        action.effects[newstate] = newstate.get_diff(state)
-
-        # if newstate:
-        #     found=False
-        #     for oldstate in verticies:
-        #         if oldstate == newstate:
-        #             children.append(oldstate)
-        #             action.effects[oldstate] = oldstate.get_diff(state)
-        #             found = True
-        #             solution = True
-        #             break
-        #     if not found:
-        #         solution = seek_plan(newstate, tasks[1:])
-        #         if solution != False:
-        #             children.append(newstate)
-        #             action.effects[newstate] = newstate.get_diff(state)
-        # for otherstate in otherstates:
-        #     found=False
-        #     for oldstate in verticies:
-        #         if oldstate == otherstate:
-        #             children.append(oldstate)
-        #             action.effects[oldstate]=oldstate.get_diff(state)
-        #             found = True
-        #             solution = True
-        #             break
-        #     if not found:
-        #         result = pyhopT(otherstate, goals)
-        #         if result:
-        #             children.append(otherstate)
-        #             action.effects[otherstate] = otherstate.get_diff(state)
-        action.children=children
-        if len(newstates)>0:
-            if solution!=False:
+                        children.append(new_state)
+                        action.effects[new_state] = new_state.get_diff(state)
+        action.children = children
+        if len(new_states) > 0:
+            if solution is not False:
                 return True
     if task1[0] in methods:
         relevant = methods[task1[0]]
         for method in relevant:
-            subtasks = method(state,*task1[1:])
-            # Can't just say "if subtasks:", because that's wrong if subtasks == []
-            if subtasks != False:
-                solution = seek_plan(state,subtasks+tasks[1:])
-                if solution != False:
+            sub_tasks = method(state, *task1[1:])
+            # Can't just say "if sub_tasks:", because that's wrong if sub_tasks == []
+            if sub_tasks is not False:
+                solution = seek_plan(state, sub_tasks+tasks[1:])
+                if solution is not False:
                     return True
     return False

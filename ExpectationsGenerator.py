@@ -1,7 +1,7 @@
-#Takes in a graph from pyhop, performs necessary calculations to add expectations.
+# Takes in a graph from pyhop, performs necessary calculations to add expectations.
 import copy
 from queue import *
-from pyhop import Action,numerics
+from pyhop import Action
 import time
 seen = set()
 created = set()
@@ -9,7 +9,7 @@ created = set()
 
 class Reg(object):
     def __init__(self):
-        self.exp={}
+        self.exp = {}
 
 
 class Expectations(object):
@@ -31,14 +31,7 @@ def o_plus(dict_a, dict_b):  # TODO: update other operators to reflect better va
     for x in key_list:
         new_dict[x] = {}
         if x in dict_b and x in dict_a:
-            # keys = [y for y in dict_a[x] if y in dict_b[x]]
-            # used_keys=set()
-            # for key in keys:
-            #     if isinstance(dict_b[x][key], dict):  # Here is where we have some {c: p,} in both dicts, need
-            #         print(dict_b[x][key], dict_a[x][key], x, key)
-            #         used_keys.add(key)
-            #         time.sleep(10)
-            new_keys = [y for y in dict_b[x] if y not in dict_a[x]] # and y not in used_keys]
+            new_keys = [y for y in dict_b[x] if y not in dict_a[x]]  # and y not in used_keys]
             for new_key in new_keys:
                 new_dict[x][new_key] = dict_b[x][new_key]
             for new_key in dict_a[x]:
@@ -52,66 +45,67 @@ def o_plus(dict_a, dict_b):  # TODO: update other operators to reflect better va
     return new_dict
 
 
-def o_minus(A, B):
-    new_dict={}
-    l=[x for x in A if x not in B]
-    for x in l:
-        new_dict[x]=A[x]
-    l=[x for x in A if x in B]
-    for x in l:
-        new_dict[x]={}
-        l2=[y for y in A[x] if y not in B[x]]
-        for y in l2:
-            new_dict[x][y]=A[x][y]
-    return new_dict
-
-
-def o_divide(A, k):
-    new_dict={}
-    for key in A:
-        new_dict[key]={}
-        for val in A[key]:
-            new_dict[key][val]={}
-            for c in A[key][val]:
-                new_dict[key][val][c]=A[key][val][c]/k
-    return new_dict
-
-
-def o_times(A,B):
+def o_minus(dict_a, dict_b):
     new_dict = {}
-    l = [x for x in B] + [x for x in A]
-    l = set(l)
-    for x in l:
+    keys = [x for x in dict_a if x not in dict_b]
+    for x in keys:
+        new_dict[x] = dict_a[x]
+    keys = [x for x in dict_a if x in dict_b]
+    for x in keys:
         new_dict[x] = {}
-        if x in B and x in A:
-            BKeys = [y for y in B[x] if y not in A[x]]
-            AKeys = [y for y in A[x] if y not in B[x]]
-            CombKeys = [y for y in A[x] if y in B[x]]
-            for key in BKeys:
-                new_dict[x][key] = B[x][key]
-            for key in AKeys:
-                new_dict[x][key] = A[x][key]
-            for key in CombKeys:
-                new_dict[x][key]={}
-                AVals=[y for y in A[x][key] if y not in B[x][key]]
-                BVals=[y for y in B[x][key] if y not in A[x][key]]
-                CombVals=[y for y in A[x][key] if y in B[x][key]]
-                for val in AVals:
-                    new_dict[x][key][val]=A[x][key][val]
-                for val in BVals:
-                    new_dict[x][key][val]=B[x][key][val]
-                for val in CombVals:
-                    new_dict[x][key][val]=A[x][key][val]+B[x][key][val]
-        elif x in B:
-            for key in B[x]:
-                new_dict[x][key] = B[x][key]
-        elif x in A:
-            for key in A[x]:
-                new_dict[x][key] = A[x][key]
+        keys_2 = [y for y in dict_a[x] if y not in dict_b[x]]
+        for y in keys_2:
+            new_dict[x][y] = dict_a[x][y]
     return new_dict
+
+
+def o_divide(dict_a, k):
+    new_dict = {}
+    for key in dict_a:
+        new_dict[key] = {}
+        for val in dict_a[key]:
+            new_dict[key][val] = {}
+            for c in dict_a[key][val]:
+                new_dict[key][val][c] = dict_a[key][val][c] / k
+    return new_dict
+
+
+def o_times(dict_a, dict_b):
+    new_dict = {}
+    all_keys = [x for x in dict_b] + [x for x in dict_a]
+    all_keys = set(all_keys)
+    for x in all_keys:
+        new_dict[x] = {}
+        if x in dict_b and x in dict_a:
+            b_keys = [y for y in dict_b[x] if y not in dict_a[x]]
+            a_keys = [y for y in dict_a[x] if y not in dict_b[x]]
+            comb_keys = [y for y in dict_a[x] if y in dict_b[x]]
+            for key in b_keys:
+                new_dict[x][key] = dict_b[x][key]
+            for key in a_keys:
+                new_dict[x][key] = dict_a[x][key]
+            for key in comb_keys:
+                new_dict[x][key] = {}
+                a_val = [y for y in dict_a[x][key] if y not in dict_b[x][key]]
+                b_val = [y for y in dict_b[x][key] if y not in dict_a[x][key]]
+                comb_val = [y for y in dict_a[x][key] if y in dict_b[x][key]]
+                for val in a_val:
+                    new_dict[x][key][val] = dict_a[x][key][val]
+                for val in b_val:
+                    new_dict[x][key][val] = dict_b[x][key][val]
+                for val in comb_val:
+                    new_dict[x][key][val] = dict_a[x][key][val] + dict_b[x][key][val]
+        elif x in dict_b:
+            for key in dict_b[x]:
+                new_dict[x][key] = dict_b[x][key]
+        elif x in dict_a:
+            for key in dict_a[x]:
+                new_dict[x][key] = dict_a[x][key]
+    return new_dict
+
 
 class Graph(object):
-    def __init__(self,starting_state,policy):
+    def __init__(self, starting_state, policy):
         self.starting_state = starting_state
         self.terminal_nodes = set()
         self.edges = set()
@@ -189,7 +183,7 @@ class Graph(object):
             if type(vertex) == type(action_type):  # action, take from parent
                 vertex.expectations.immediate = copy.deepcopy(parent.expectations.immediate)
             elif vertex == self.starting_state:  # starting state, no prev effects
-                vertex.expectations.immediate = self.policy[vertex].precond
+                vertex.expectations.immediate = self.policy[vertex].preconditions
             else:  # terminal state
                 vertex.expectations.immediate = o_plus({}, parent.effects[vertex])  # replace {} with goals
                 pass
@@ -242,12 +236,12 @@ def comp_num_eff(vertex, num_eff, regression):
                             temp_max = 'inf'
                     regression[key][val].pop(c, None)
                     regression[key][val][(temp_min, temp_max)] = prob
-            elif key in vertex.precond and val in vertex.precond[key]:
+            elif key in vertex.preconditions and val in vertex.preconditions[key]:
                 if key not in regression:
                     regression[key] = {}
                 if val not in regression[key]:
                     regression[key][val] = {}
-                for c in vertex.precond[key][val]:
+                for c in vertex.preconditions[key][val]:
                     regression[key][val][c] = 1
     return regression
 
@@ -285,7 +279,7 @@ class Tau:
                             temp_max = next_node[1] - prev_node[1]
                             num_eff[key][val] = (temp_min, temp_max)
                 new_1 = comp_num_eff(vertex, num_eff, expectations)
-                new_2 = o_minus((o_minus(vertex.precond, vertex.node.effects[last_vertex.node])), expectations)
+                new_2 = o_minus((o_minus(vertex.preconditions, vertex.node.effects[last_vertex.node])), expectations)
                 new = o_times(new_1, new_2)
                 setattr(vertex.expectations, exp_type, o_times(getattr(vertex.expectations, exp_type), new))
                 vertex.added += 1
@@ -308,32 +302,40 @@ class Tau:
                 vertex = self.vs[node][0]
                 vertex.expectations.informed = copy.deepcopy(vertex.node.expectations.informed)
                 keys = set([x for x in vertex.expectations.informed] + [x for x in vertex.expectations.regression])
+                informed = vertex.expectations.informed
+                regression = vertex.expectations.regression
+                goldilocks = vertex.expectations.goldilocks
                 for key in keys:  # TODO: maybe a better way to do this? it works and it flows quick so maybe leave
                     if key not in node.expectations.goldilocks:
                         node.expectations.goldilocks[key] = {}
-                    if key in vertex.expectations.regression:
-                        if key in vertex.expectations.informed:
+                    if key in regression:
+                        if key in informed:
                             # key in both
-                            vals = set([x for x in vertex.expectations.informed[key]] + [x for x in vertex.expectations.regression[key]])
+                            vals = set([x for x in informed[key]] + [x for x in regression[key]])
                             for val in vals:
-                                if val in vertex.expectations.regression[key]:
-                                    if val in vertex.expectations.informed[key]:
+                                if val in regression[key]:
+                                    if val in informed[key]:
                                         # val in both
-                                        vertex.expectations.goldilocks[key][val] = (vertex.expectations.informed[key][val], vertex.expectations.regression[key][val])
+                                        if isinstance(informed[key][val], tuple):
+                                            goldilocks[key][val] = (informed[key][val], regression[key][val])
                                     else:
-                                        vertex.expectations.goldilocks[key][val] = (None, vertex.expectations.regression[key][val])
+                                        if isinstance(vertex.expectations.regression[key][val], tuple):
+                                            goldilocks[key][val] = (None, regression[key][val])
                                         # val only in regression
-                                elif val in vertex.expectations.informed:
+                                elif val in informed:
                                     # val only in informed
-                                    vertex.expectations.goldilocks[key][val] = (vertex.expectations.informed[key][val], None)
+                                    if isinstance(informed[key][val], tuple):
+                                        goldilocks[key][val] = (informed[key][val], None)
                         else:
                             # key in only regression
-                            for val in vertex.expectations.regression[key]:
-                                vertex.expectations.goldilocks[key][val] = (None, vertex.expectations.regression[key][val])
-                    elif key in vertex.expectations.informed:
+                            for val in regression[key]:
+                                if isinstance(regression[key][val], tuple):
+                                    goldilocks[key][val] = (None, regression[key][val])
+                    elif key in informed:
                         # key in only informed
-                        for val in vertex.expectations.informed[key]:
-                            vertex.expectations.goldilocks[key][val] = (vertex.expectations.informed[key][val], None)
+                        for val in informed[key]:
+                            if isinstance(informed[key][val], tuple):
+                                goldilocks[key][val] = (informed[key][val], None)
             setattr(node.expectations, exp_type, copy.deepcopy(getattr(self.vs[node][0].expectations, exp_type)))
             for num in self.vs[node]:
                 self.vs[node][num].added = 0
@@ -364,12 +366,12 @@ class Tau:
                 seen.add(vertex)
                 vertex.effects = {}
                 if type(vertex.node) == action_type:
-                    vertex.precond = {}
-                    for key in vertex.node.precond:
-                        vertex.precond[key] = {}
-                        for c in vertex.node.precond[key]:
-                            vertex.precond[key][c] = {}
-                            vertex.precond[key][c][vertex.node.precond[key][c]] = 1
+                    vertex.preconditions = {}
+                    for key in vertex.node.preconditions:
+                        vertex.preconditions[key] = {}
+                        for c in vertex.node.preconditions[key]:
+                            vertex.preconditions[key][c] = {}
+                            vertex.preconditions[key][c][vertex.node.preconditions[key][c]] = 1
                     for eff_node in vertex.node.effects:
                         vertex.effects[eff_node] = {}
                         for key in vertex.node.effects[eff_node]:
@@ -442,10 +444,10 @@ class Vertex:
 def print_exp(policy):
     for state in policy:
         state.expectations.print()
+        print()
 
 
 def gen_expectations(policy, starting_state):
-    print('here', numerics)
     graph = Graph(starting_state, policy)
     print("finished graph")
     graph.print()
