@@ -5,20 +5,20 @@ import copy
 from random import *
 from collections import defaultdict
 #nprecond={dict:{1:(denom:val)}}
-Geff=1
+Geff=10
 err=.1
-ND=False #Action type
+ND=True #Action type
 
 
 
 #forward or up
 def stack(state, block1,block2):
     state1=copy.copy(state)
-    if state.clear[block1] and state.clear[block2] and state.energy[1][0]>=10:
+    if state.clear[block1] and state.clear[block2] and state.energy[1][0]>=Geff:
         precond={'clear':{block1:True, block2:True},'energy':{1:(10,'inf')}}
         state.on[block1] = block2
         state.clear[block2]=False
-        state.energy[1]=(state.energy[1][0]-(10+err),state.energy[1][1]-(10-err))
+        state.energy[1]=(state.energy[1][0]-(Geff+err),state.energy[1][1]-(Geff-err))
         if ND:
             return ([state,state1],precond,)
         else:
@@ -74,14 +74,14 @@ def achieve_goal(state, n):
     used=[]
     energy=state.energy[1][0]
     for i in range(n):
-        if energy<10:
+        if energy<Geff:
             moves.append('recharge')
         block=choice([block for block in clear if clear[block] and block!=top and block not in used])
         if not state.clear[block]:
             print(str(block)+" IS NOT CLEAR")
         moves.append(('stack',block,top))
         clear[top]=False
-        energy-=(10+err)
+        energy-=(Geff+err)
         top=block
         used.append(block)
     print(moves)

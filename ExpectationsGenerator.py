@@ -150,7 +150,7 @@ class Graph(object):
         #         print("Fuck")
         #         time.sleep(1)1
 
-    def is_parent(self, st, dt):  # determine if st is parent of dt in self, for deciding if edge is a backedge in buildself
+    def is_parent(self, st, dt):  # determine if st is parent of dt in self, deciding if edge is a back edge
         visited = {}
         for v in self.vertices:
             visited[v] = False
@@ -161,7 +161,7 @@ class Graph(object):
             new = queue.get()
             if new == dt:
                 return True
-            children = [x for (y, x) in self.edges-self.back_edges if y == new ]
+            children = [x for (y, x) in self.edges-self.back_edges if y == new]
             for child in children:
                 if not visited[child]:
                     queue.put(child)
@@ -180,18 +180,18 @@ class Graph(object):
             v.expectations = Expectations()
 
     def gen_immediate(self):
-        queue=Queue()
-        forward_only=self.edges-self.back_edges-self.cross_edges
-        queue.put((self.starting_state,self.starting_state))
+        queue = Queue()
+        forward_only = self.edges-self.back_edges-self.cross_edges
+        queue.put((self.starting_state, self.starting_state))
         action_type = Action()
         while not queue.empty():
-            vertex, parent=queue.get()
-            if type(vertex)==type(action_type): #action, take from parent
-                vertex.expectations.immediate=copy.deepcopy(parent.expectations.immediate)
-            elif vertex == self.starting_state: #starting state, no prev effects
-                vertex.expectations.immediate=self.policy[vertex].precond
-            else: #terminal state
-                vertex.expectations.immediate=o_plus({},parent.effects[vertex]) #replace {} with goals if ever needed
+            vertex, parent = queue.get()
+            if type(vertex) == type(action_type):  # action, take from parent
+                vertex.expectations.immediate = copy.deepcopy(parent.expectations.immediate)
+            elif vertex == self.starting_state:  # starting state, no prev effects
+                vertex.expectations.immediate = self.policy[vertex].precond
+            else:  # terminal state
+                vertex.expectations.immediate = o_plus({}, parent.effects[vertex])  # replace {} with goals
                 pass
             children = [x for (y, x) in forward_only if y == vertex]
             for child in children:
@@ -204,54 +204,55 @@ class Graph(object):
         action_type = Action()
         while not queue.empty():
             vertex, parent = queue.get()
-            parent_expectations=parent.expectations.informed
+            parent_expectations = parent.expectations.informed
             if type(vertex) == type(action_type):  # vertex=an Action
                 vertex.expectations.informed = copy.deepcopy(parent_expectations)
                 pass  # don't change parent_expectations, pass on to grandchildren of preceding state
-            elif vertex==self.starting_state:
-                pass #starting state, null informed
+            elif vertex == self.starting_state:
+                pass  # starting state, null informed
             else:  # vertex != s_0 and is a state
-                vertex.expectations.informed = o_plus(parent.effects[vertex],copy.deepcopy(parent_expectations))
+                vertex.expectations.informed = o_plus(parent.effects[vertex], copy.deepcopy(parent_expectations))
                 pass
             children = [x for (y, x) in forward_only if y == vertex]
             for child in children:
                 queue.put((child, vertex))
 
 
-class Tau:
-    def comp_num_eff(self, vertex, num_eff, regression):
-        for key in num_eff:
-            if key not in regression:
-                regression[key]={}
-            for val in num_eff[key]:
-                if val in regression[key]:
-                    keys = [c for c in regression[key][val]]
-                    for c in keys:
-                        prob=regression[key][val][c]
-                        eff=num_eff[key][val]
-                        min = '-inf'
-                        max = 'inf'
-                        if isinstance(c[0], (int, float)): #TODO: Type checking for actions in this format
-                            if isinstance(eff[0], (int, float)):
-                                min = c[0] - eff[0]
-                            else:
-                                min = '-inf'
-                        if isinstance(c[1], (int, float)):
-                            if isinstance(eff[1], (int, float)):
-                                max = c[1] - eff[1]
-                            else:
-                                max = 'inf'
-                        regression[key][val].pop(c, None)
-                        regression[key][val][(min, max)]=prob
-                elif key in vertex.precond and val in vertex.precond[key]:
-                    if key not in regression:
-                        regression[key] = {}
-                    if val not in regression[key]:
-                        regression[key][val] = {}
-                    for c in vertex.precond[key][val]:
-                        regression[key][val][c] = 1
-        return regression
+def comp_num_eff(vertex, num_eff, regression):
+    for key in num_eff:
+        if key not in regression:
+            regression[key] = {}
+        for val in num_eff[key]:
+            if val in regression[key]:
+                keys = [c for c in regression[key][val]]
+                for c in keys:
+                    prob = regression[key][val][c]
+                    eff = num_eff[key][val]
+                    temp_min = '-inf'
+                    temp_max = 'inf'
+                    if isinstance(c[0], (int, float)):  # TODO: Type checking for actions in this format
+                        if isinstance(eff[0], (int, float)):
+                            temp_min = c[0] - eff[0]
+                        else:
+                            temp_min = '-inf'
+                    if isinstance(c[1], (int, float)):
+                        if isinstance(eff[1], (int, float)):
+                            temp_max = c[1] - eff[1]
+                        else:
+                            temp_max = 'inf'
+                    regression[key][val].pop(c, None)
+                    regression[key][val][(temp_min, temp_max)] = prob
+            elif key in vertex.precond and val in vertex.precond[key]:
+                if key not in regression:
+                    regression[key] = {}
+                if val not in regression[key]:
+                    regression[key][val] = {}
+                for c in vertex.precond[key][val]:
+                    regression[key][val][c] = 1
+    return regression
 
+
+class Tau:
     def gen_regressed_expectations(self, exp_type):
         if exp_type == "goldilocks":
             print("here")
@@ -278,31 +279,27 @@ class Tau:
                         if isinstance(c, tuple):
                             if key not in num_eff:
                                 num_eff[key] = {}
-                            prev = getattr(self.previous_vertex[vertex].node, key)[val]
-                            next = getattr(last_vertex.node, key)[val]
-                            min = next[0] - prev[0]
-                            max = next[1] - prev[1]
-                            num_eff[key][val] = (min, max)
-                new_1=self.comp_num_eff(vertex, num_eff, expectations)
-                new_2=o_minus((o_minus(vertex.precond, vertex.node.effects[last_vertex.node])), expectations)
+                            prev_node = getattr(self.previous_vertex[vertex].node, key)[val]
+                            next_node = getattr(last_vertex.node, key)[val]
+                            temp_min = next_node[0] - prev_node[0]
+                            temp_max = next_node[1] - prev_node[1]
+                            num_eff[key][val] = (temp_min, temp_max)
+                new_1 = comp_num_eff(vertex, num_eff, expectations)
+                new_2 = o_minus((o_minus(vertex.precond, vertex.node.effects[last_vertex.node])), expectations)
                 new = o_times(new_1, new_2)
-                # print(new_1)
-                # print(new_2)
-                # print(new)
-                # print()
-                # new = (o_minus(o_minus(regression, vertex.node.effects[last_vertex.node]), vertex.precond))
                 setattr(vertex.expectations, exp_type, o_times(getattr(vertex.expectations, exp_type), new))
                 vertex.added += 1
                 if exp_type == 'goldilocks':
                     print(vertex)
                     print(vertex.expectations.goldilocks)
-                    print(vertex.added,vertex.children)
+                    print(vertex.added, vertex.children)
             elif vertex not in self.terminal:
                 setattr(vertex.expectations, exp_type, expectations)
                 vertex.added += 1
             if vertex.finished():
                 if vertex.children > 0:
-                    setattr(vertex.expectations, exp_type, o_divide(getattr(vertex.expectations, exp_type), vertex.children))
+                    div_result = o_divide(getattr(vertex.expectations, exp_type), vertex.children)
+                    setattr(vertex.expectations, exp_type, div_result)
                 parents = [x for (x, y) in self.edges if y == vertex]
                 for parent in parents:
                     q.put((parent, copy.deepcopy(getattr(vertex.expectations, exp_type)), vertex))
@@ -311,7 +308,7 @@ class Tau:
                 vertex = self.vs[node][0]
                 vertex.expectations.informed = copy.deepcopy(vertex.node.expectations.informed)
                 keys = set([x for x in vertex.expectations.informed] + [x for x in vertex.expectations.regression])
-                for key in keys: # TODO: maybe a better way to do this? it works and it flows quick so maybe leave
+                for key in keys:  # TODO: maybe a better way to do this? it works and it flows quick so maybe leave
                     if key not in node.expectations.goldilocks:
                         node.expectations.goldilocks[key] = {}
                     if key in vertex.expectations.regression:
@@ -380,7 +377,6 @@ class Tau:
                             for c in vertex.node.effects[eff_node][key]:
                                 vertex.effects[eff_node][key][c] = {}
                                 vertex.effects[eff_node][key][c][vertex.node.effects[eff_node][key][c]] = 1
-                    # vertex.precond = copy.deepcopy(vertex.precond)
                 vertex.children = len([y for (x, y) in self.edges if x == vertex])
                 vertex.set = True
         return
@@ -462,6 +458,6 @@ def gen_expectations(policy, starting_state):
     tau.gen_regressed_expectations('regression')
     print("finished regression")
     tau.gen_regressed_expectations('goldilocks')
-    # print("finished goldilocks")
+    print("finished goldilocks")
     print_exp(policy)
     return

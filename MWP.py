@@ -2,7 +2,6 @@
 from __future__ import print_function
 import pyhop as treehop
 from MWD import *
-from collections import defaultdict
 from random import *
 from ExpectationsGenerator import gen_expectations
 
@@ -64,10 +63,8 @@ while i<=n**2:
 
 goals=[('light_all', 'Agent1', n)]
 treehop.declare_goals(goals)
-policy=treehop.pyhopT(state, goals,True)
-#treehop.print_policy(policy,state)
-
+treehop.declare_numeric('energy')
+policy=treehop.pyhopT(state, goals, True)
+treehop.print_policy(policy,state)
 gen_expectations(policy, state)
-#treehop.print_plan_dfs(actions)
-#print_plan(Plan,exp='Rexp')
 
