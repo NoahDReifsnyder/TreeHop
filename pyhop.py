@@ -300,6 +300,7 @@ def pyhop_t(state, tasks, original_call=False):
     If successful, return the plan. Otherwise return False.
     """
     result = seek_plan(state, tasks)  # result holds True or False if planner succeeds or fails
+    print(result)
     if original_call:
         return Policy
     return result

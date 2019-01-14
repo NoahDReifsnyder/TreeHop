@@ -1,7 +1,7 @@
 # Grid World Problem File
 from MWD import *
 from random import *
-# from ExpectationsGenerator import gen_expectations
+from ExpectationsGenerator import *
 
 state = treehop.State('state')
 state.above = {}
@@ -10,9 +10,10 @@ state.below = {}
 state.in_front = {}
 state.lit = {"B1": 0, "B2": 0, "B3": 0}
 state.beacons = {}
-state.agent = {'Agent1': 1}
-state.clear = {}
+state.agent = {'Agent1': 7}
 state.fuel = {'Agent1': (10, 10)}
+state.max_fuel = copy.deepcopy(state.fuel)
+state.repair = {'Agent1': False}
 n = 5
 placed = []
 for b in state.lit:
@@ -23,7 +24,6 @@ for b in state.lit:
     state.beacons[b] = x
 i = 1
 while i <= n**2:
-    state.clear[i] = 1
     if i <= n:
         if i == 1:
             state.behind[i] = i+1
@@ -56,10 +56,8 @@ while i <= n**2:
         state.in_front[i] = i - 1
         state.behind[i] = i+1
     i = i+1
-
-move_forward(state, 'Agent1')
-# goals=[('light_all', 'Agent1', n)]
-# treehop.declare_goals(goals)
-# policy=treehop.pyhopT(state, goals, True)
-# treehop.print_policy(policy,state)
-# gen_expectations(policy, state)
+goals = [('light_all', 'Agent1', n)]
+treehop.declare_goals(goals)
+policy = treehop.pyhop_t(state, goals, True)
+treehop.print_policy(policy, state)
+gen_expectations(policy, state)
