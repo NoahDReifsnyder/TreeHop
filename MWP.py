@@ -1,24 +1,24 @@
-#Grid World Problem File
+# Grid World Problem File
 from MWD import *
 from random import *
-from ExpectationsGenerator import gen_expectations
+# from ExpectationsGenerator import gen_expectations
 
 state = treehop.State('state')
 state.above = {}
 state.behind = {}
 state.below = {}
 state.in_front = {}
-state.lit = {"B1":0,"B2":0,"B3":0}
+state.lit = {"B1": 0, "B2": 0, "B3": 0}
 state.beacons = {}
-state.agent = {'Agent1':1}
+state.agent = {'Agent1': 1}
 state.clear = {}
-state.fuel = {'Agent1':(10,10)}
+state.fuel = {'Agent1': (10, 10)}
 n = 5
 placed = []
 for b in state.lit:
-    x = randint(1,n*n)
+    x = randint(1, n*n)
     while x in placed:
-        x = randint(1,n*n)
+        x = randint(1, n*n)
     placed.append(x)
     state.beacons[b] = x
 i = 1
@@ -42,11 +42,11 @@ while i <= n**2:
             state.behind[i] = i+1
             state.in_front[i] = i - 1
         state.below[i] = i-n
-    elif (i-1)%n == 0:
+    elif (i-1) % n == 0:
         state.below[i] = i-n
         state.above[i] = i+n
         state.behind[i] = i+1
-    elif i%n == 0:
+    elif i % n == 0:
         state.below[i] = i-n
         state.above[i] = i+n
         state.in_front[i] = i - 1
@@ -55,7 +55,7 @@ while i <= n**2:
         state.above[i] = i+n
         state.in_front[i] = i - 1
         state.behind[i] = i+1
-    i=i+1
+    i = i+1
 
 move_forward(state, 'Agent1')
 # goals=[('light_all', 'Agent1', n)]
@@ -63,4 +63,3 @@ move_forward(state, 'Agent1')
 # policy=treehop.pyhopT(state, goals, True)
 # treehop.print_policy(policy,state)
 # gen_expectations(policy, state)
-

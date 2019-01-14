@@ -1,10 +1,17 @@
-#Grid World Domain File With Preconditions Sent To Planner
-#Conformant Planning for refuelling
+# Grid World Domain File With Preconditions Sent To Planner
+# Conformant Planning for refuelling
 import pyhop as treehop
 import copy
 from collections import defaultdict
-Geff=1
-err=.1
+Geff = 1
+err = .1
+
+
+
+
+
+
+
 
 # def refuel(state,agent):
 #     pre=state.fuel[agent]
@@ -123,7 +130,9 @@ err=.1
 #             return ([state],precond)
 #     else: return False
 
+
 def move_forward(state, agent, nd_eff=True):
+
     pass
 
 
@@ -199,4 +208,3 @@ def move_forward(state, agent, nd_eff=True):
 #             build.append(('relight',b))
 #     return build
 # treehop.declare_methods('light_all',light_all)
-
