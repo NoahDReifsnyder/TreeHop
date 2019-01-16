@@ -101,8 +101,9 @@ import sys
 ############################################################
 # States and goals
 class Action:
-    def __init__(self, name="Default", state=None):
+    def __init__(self, args=None, name="Default", state=None):
         self.name = name
+        self.args = args
         self.children = []
         self.effects = {}
         self.preconditions = {}

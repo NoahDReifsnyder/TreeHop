@@ -1,8 +1,8 @@
 #Use to run plans
 import json
-P=__import__('AP')#substitute problem file here
-D=__import__('AD')#substitue domain file here
-import treehop as T#import Planner
+P=__import__('MWP')#substitute problem file here
+D=__import__('MWD')#substitue domain file here
+import pyhop as T#import Planner
 from random import *
 from importlib import reload
 import copy
@@ -18,8 +18,8 @@ print(P.n)
 def check(state,exp):
     global reqP
     off=0
-    if isinstance(exp,T.State):
-        return T.eq_state(state,exp)
+    if isinstance(exp, T.State):
+        return T.eq_state(state, exp)
     for d in exp:
         for e in exp[d]:
             if isinstance(exp[d][e],dict):

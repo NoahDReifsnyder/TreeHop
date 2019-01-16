@@ -7,11 +7,16 @@ G_eff = 1
 err = .1
 p_G_eff = G_eff + err
 s_G_eff = G_eff - err
-
+repair_cost = 5
 
 def refuel(state, agent):
+    t_p_g_eff = p_G_eff
+    t_s_g_eff = s_G_eff
+    if state.repair[agent]:
+        t_p_g_eff += repair_cost
+        t_s_g_eff += repair_cost
     if state.fuel[agent][0] < p_G_eff:
-        preconditions = {'fuel': {agent: ('-inf', p_G_eff)}}
+        preconditions = {'fuel': {agent: ('-inf', t_p_g_eff)}}
         state.fuel[agent] = state.max_fuel[agent]
         return [state], preconditions
     else:
@@ -37,10 +42,15 @@ def repair(state, agent):
 
 
 def move_forward(state, agent):
+    t_p_g_eff = p_G_eff
+    t_s_g_eff = s_G_eff
+    if state.repair[agent]:
+        t_p_g_eff += repair_cost
+        t_s_g_eff += repair_cost
     loc = state.agent[agent]
     if loc in state.behind:
-        preconditions = {'agent': {agent: loc}, 'behind': {loc: state.behind[loc]}, 'fuel': {agent: (p_G_eff, 'inf')}}
-        state.fuel[agent] = (state.fuel[agent][0] - p_G_eff, state.fuel[agent][1] - s_G_eff)
+        preconditions = {'agent': {agent: loc}, 'behind': {loc: state.behind[loc]}, 'fuel': {agent: (t_p_g_eff, 'inf')}}
+        state.fuel[agent] = (state.fuel[agent][0] - t_p_g_eff, state.fuel[agent][1] - t_s_g_eff)
         state.agent[agent] = state.behind[loc]
         return [state], preconditions
     else:
@@ -48,10 +58,15 @@ def move_forward(state, agent):
 
 
 def move_back(state, agent):
+    t_p_g_eff = p_G_eff
+    t_s_g_eff = s_G_eff
+    if state.repair[agent]:
+        t_p_g_eff += repair_cost
+        t_s_g_eff += repair_cost
     loc = state.agent[agent]
     if loc in state.in_front:
-        preconditions = {'agent': {agent: loc}, 'behind': {loc: state.in_front[loc]}, 'fuel': {agent: (p_G_eff, 'inf')}}
-        state.fuel[agent] = (state.fuel[agent][0] - p_G_eff, state.fuel[agent][1] - s_G_eff)
+        preconditions = {'agent': {agent: loc}, 'behind': {loc: state.in_front[loc]}, 'fuel': {agent: (t_p_g_eff, 'inf')}}
+        state.fuel[agent] = (state.fuel[agent][0] - t_p_g_eff, state.fuel[agent][1] - t_s_g_eff)
         state.agent[agent] = state.in_front[loc]
         return [state], preconditions
     else:
@@ -59,10 +74,15 @@ def move_back(state, agent):
 
 
 def move_up(state, agent):
+    t_p_g_eff = p_G_eff
+    t_s_g_eff = s_G_eff
+    if state.repair[agent]:
+        t_p_g_eff += repair_cost
+        t_s_g_eff += repair_cost
     loc = state.agent[agent]
     if loc in state.below:
-        preconditions = {'agent': {agent: loc}, 'behind': {loc: state.below[loc]}, 'fuel': {agent: (p_G_eff, 'inf')}}
-        state.fuel[agent] = (state.fuel[agent][0] - p_G_eff, state.fuel[agent][1] - s_G_eff)
+        preconditions = {'agent': {agent: loc}, 'behind': {loc: state.below[loc]}, 'fuel': {agent: (t_p_g_eff, 'inf')}}
+        state.fuel[agent] = (state.fuel[agent][0] - t_p_g_eff, state.fuel[agent][1] - t_s_g_eff)
         state.agent[agent] = state.below[loc]
         return [state], preconditions
     else:
@@ -70,10 +90,15 @@ def move_up(state, agent):
 
 
 def move_down(state, agent):
+    t_p_g_eff = p_G_eff
+    t_s_g_eff = s_G_eff
+    if state.repair[agent]:
+        t_p_g_eff += repair_cost
+        t_s_g_eff += repair_cost
     loc = state.agent[agent]
     if loc in state.above:
-        preconditions = {'agent': {agent: loc}, 'behind': {loc: state.above[loc]}, 'fuel': {agent: (p_G_eff, 'inf')}}
-        state.fuel[agent] = (state.fuel[agent][0] - p_G_eff, state.fuel[agent][1] - s_G_eff)
+        preconditions = {'agent': {agent: loc}, 'behind': {loc: state.above[loc]}, 'fuel': {agent: (t_p_g_eff, 'inf')}}
+        state.fuel[agent] = (state.fuel[agent][0] - t_p_g_eff, state.fuel[agent][1] - t_s_g_eff)
         state.agent[agent] = state.above[loc]
         return [state], preconditions
     else:

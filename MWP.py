@@ -58,6 +58,6 @@ while i <= n**2:
     i = i+1
 goals = [('light_all', 'Agent1', n)]
 treehop.declare_goals(goals)
-policy = treehop.pyhop_t(state, goals, True)
-treehop.print_policy(policy, state)
-gen_expectations(policy, state)
+# policy = treehop.pyhop_t(state, goals, True)
+# treehop.print_policy(policy, state)
+# gen_expectations(policy, state)

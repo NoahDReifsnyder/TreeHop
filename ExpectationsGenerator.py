@@ -249,7 +249,6 @@ def comp_num_eff(vertex, num_eff, regression):
 class Tau:
     def gen_regressed_expectations(self, exp_type):
         if exp_type == "goldilocks":
-            print("here")
             for vertex in self.terminal:
                 for key in vertex.node.expectations.informed:
                     if key not in vertex.expectations.goldilocks:
@@ -283,10 +282,6 @@ class Tau:
                 new = o_times(new_1, new_2)
                 setattr(vertex.expectations, exp_type, o_times(getattr(vertex.expectations, exp_type), new))
                 vertex.added += 1
-                if exp_type == 'goldilocks':
-                    print(vertex)
-                    print(vertex.expectations.goldilocks)
-                    print(vertex.added, vertex.children)
             elif vertex not in self.terminal:
                 setattr(vertex.expectations, exp_type, expectations)
                 vertex.added += 1
@@ -417,7 +412,6 @@ class Tau:
                     self.previous_vertex[vertex] = parents[0]
                 else:
                     self.previous_vertex[vertex] = None
-        print(self.previous_vertex)
         return
 
 
@@ -461,5 +455,5 @@ def gen_expectations(policy, starting_state):
     print("finished regression")
     tau.gen_regressed_expectations('goldilocks')
     print("finished goldilocks")
-    print_exp(policy)
+    # print_exp(policy)
     return
