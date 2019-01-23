@@ -248,6 +248,12 @@ def find_if(cond, seq):
 operators = {}
 methods = {}
 goals = []
+numeric_values = set()
+
+
+def declare_numeric(numeric_val):
+    numeric_values.add(numeric_val)
+    pass
 
 
 def declare_goals(goal_list):

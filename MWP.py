@@ -12,6 +12,7 @@ state.lit = {"B1": 0, "B2": 0, "B3": 0}
 state.beacons = {}
 state.agent = {'Agent1': 7}
 state.fuel = {'Agent1': (10, 10)}
+treehop.declare_numeric("fuel")
 state.max_fuel = copy.deepcopy(state.fuel)
 state.repair = {'Agent1': False}
 n = 5

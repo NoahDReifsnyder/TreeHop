@@ -12,14 +12,14 @@ import sys
 import time
 
 
-def get_fuel_level(fuel):
-    fuel_range = fuel[1]-fuel[0]
-    ran_fuel_level = random()
-    ran_fuel_level *= fuel_range
-    ran_fuel_level += fuel[0]
-    ran_fuel_level = round(ran_fuel_level, 2)
-    print(fuel, ran_fuel_level)
-    retval = (ran_fuel_level, ran_fuel_level)
+def determine_value(val_range):
+    fuel_range = val_range[1] - val_range[0]
+    ran_val = random()
+    ran_val *= fuel_range
+    ran_val += val_range[0]
+    ran_val = round(ran_val, 2)
+    print(val_range, ran_val)
+    retval = (ran_val, ran_val)
     return retval
 
 
@@ -41,12 +41,13 @@ for x in range(0, num_runs):
     policy = treehop.pyhop_t(state, treehop.goals, True)
     gen_expectations(policy, state)
     while state in policy:
-        fuel = state.fuel[agent]
         prev = copy.deepcopy(state)
         counter += 1
         action = policy[state]
         returnval = getattr(D, action.name[0])(state, *action.name[1:])
         state = action.children[0]
-        state.fuel[agent] = get_fuel_level(fuel)
+        for numeric_value in pyhop.numeric_values:
+            for key in getattr(state, numeric_value):
+                    getattr(state, numeric_value)[key] = determine_value(getattr(state, numeric_value)[key])
     print(state.beacons)
 print(counter / num_runs)
