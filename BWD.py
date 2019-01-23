@@ -4,7 +4,6 @@ import copy
 
 
 def collect_block(state, agent, block):
-    print(block, state.weights[block])
     if block in state.weights:
         preconditions = {'weights': {block: ('-inf', 'inf')}}
         prev = state.acquired[agent]
@@ -32,7 +31,6 @@ def achieve_goal(state, agent, amount):
     moves = []
     state = copy.deepcopy(state)
     while amount > 0:
-        print(amount)
         block = get_largest(state, amount)
         moves.append(('collect_block', agent, block))
         state = collect_block(state, agent, block)[0][0]
