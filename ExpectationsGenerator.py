@@ -317,7 +317,7 @@ class Tau:
                                         if isinstance(vertex.expectations.regression[key][val], tuple):
                                             goldilocks[key][val] = (None, regression[key][val])
                                         # val only in regression
-                                elif val in informed:
+                                elif val in informed[key]:
                                     # val only in informed
                                     if isinstance(informed[key][val], tuple):
                                         goldilocks[key][val] = (informed[key][val], None)
@@ -455,5 +455,5 @@ def gen_expectations(policy, starting_state):
     print("finished regression")
     tau.gen_regressed_expectations('goldilocks')
     print("finished goldilocks")
-    # print_exp(policy)
+    print_exp(policy)
     return
