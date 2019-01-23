@@ -18,6 +18,10 @@ def set_domain(domain):
     P = __import__(p_string)
     D = __import__(d_string)
 
+
+set_domain('MW')
+
+
 def determine_value(val_range):
     ran_range = val_range[1] - val_range[0]
     ran_val = random()
@@ -34,9 +38,11 @@ def reload_pyhop():
 
 
 reqP = .5  # required percentage for expectations to be true
+counter = 0  # keeps track of actions taken
 
 
 def take_action(state):
+    global counter
     prev = copy.deepcopy(state)
     counter += 1
     action = policy[state]
@@ -45,7 +51,8 @@ def take_action(state):
     for numeric_value in pyhop.numeric_values:
         for key in getattr(state, numeric_value):
             getattr(state, numeric_value)[key] = determine_value(getattr(state, numeric_value)[key])
-counter = 0  # keeps track of actions taken
+
+
 fuel_consumed = 0
 countFailed = 0  # keeps track of replans
 num_runs = 10
