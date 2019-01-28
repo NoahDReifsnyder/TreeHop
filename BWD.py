@@ -15,6 +15,9 @@ def collect_block(state, agent, block):
         return False
 
 
+def move_block(state, agent, block):
+
+
 treehop.declare_operators(collect_block)
 
 type_list = Queue()
@@ -22,13 +25,18 @@ type_list.put(1)
 type_list.put(2)
 type_list.put(3)
 
-def get_largest_next_type(state, max_val):
+def get_largest_next_type(state):
+    top_list = [x for x in state.top if state.top[x]]
     largest = (None, 0)
     use_type = type_list.get()
     type_list.put(use_type)
-    use_type_list = [x for x in state.weights if state.types[x] == use_type]
+    use_type_list = [x for x in state.weights if state.types[x] == use_type and x in top_list]
+    while not use_type_list:
+        top_list = [x for x in state.under if state.under[x] in top_list]
+        use_type_list = [x for x in state.weights if state.types[x] == use_type and x in top_list]
+    print(use_type_list)
     for block in use_type_list:
-        if max_val > state.weights[block][0] > largest[1]:
+        if state.weights[block][0] > largest[1]:
             largest = (block, state.weights[block][0])
     return largest[0]
 
@@ -37,11 +45,17 @@ def achieve_goal(state, agent, amount):
     max_amount = amount
     moves = []
     state = copy.deepcopy(state)
-    while amount > 0:
-        block = get_largest_next_type(state, amount)
+    while max_amount > state.acquired[agent][0]:
+        block = get_largest_next_type(state)
+        temp = block
+        while not state.top[temp]:
+            temp = state.under[temp]
+        while not temp == block:
+            moves.append(('move_block', agent, block))
+            state = move_block(state, agent, block)[0][0]
+            temp = state.on[temp]
         moves.append(('collect_block', agent, block))
         state = collect_block(state, agent, block)[0][0]
-        amount = max_amount - state.acquired[agent][1]
     return moves
 
 
