@@ -301,13 +301,18 @@ verticies = []
 Policy = {}
 
 
+def reset():
+    global verticies, Policy
+    verticies = []
+    Policy = {}
+
+
 def pyhop_t(state, tasks, original_call=False):
     """
     Try to find a plan that accomplishes tasks in state. 
     If successful, return the plan. Otherwise return False.
     """
     result = seek_plan(state, tasks)  # result holds True or False if planner succeeds or fails
-    print(result)
     if original_call:
         return Policy
     return result
@@ -363,7 +368,8 @@ def seek_plan(state, tasks):
     if task1[0] in methods:
         relevant = methods[task1[0]]
         for method in relevant:
-            sub_tasks = method(state, *task1[1:])
+            temp_state = copy.deepcopy(state)
+            sub_tasks = method(temp_state, *task1[1:])
             # Can't just say "if sub_tasks:", because that's wrong if sub_tasks == []
             if sub_tasks is not False:
                 solution = seek_plan(state, sub_tasks+tasks[1:])

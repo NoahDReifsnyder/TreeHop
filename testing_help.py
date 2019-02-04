@@ -11,12 +11,78 @@ import sys
 import time
 
 
+def __ge__(self, other):
+    if type(self) == str:
+        if type(other) == str:
+            return round(self, 2) >= round(other, 2)  # because planner rounds weird sometimes
+        else:
+            if self == 'inf':
+                return True
+            else:
+                return False
+    elif type(other) == str:
+        if other == 'inf':
+            return False
+        else:
+            return True
+    else:
+        return round(self, 2) >= round(other, 2)
+
+
+def __le__(self, other):
+    if type(self) == str:
+        if type(other) == str:
+            return round(self, 2) <= round(other, 2)
+        else:
+            if self == 'inf':
+                return False
+            else:
+                return True
+    elif type(other) == str:
+        if other == 'inf':
+            return True
+        else:
+            return False
+    else:
+        return round(self, 2) <= round(other, 2)
+
+
+def check_equality(first, second):
+    if type(first) == tuple:
+        if type(second) == tuple:
+            return __ge__(second[0], first[0]) and __le__(second[1], first[1])
+        else:
+            return False
+    else:
+        return first == second
+
+
+def check_expectations(state, expectations, exp_type):
+    expectations = getattr(expectations, exp_type)
+    for category in expectations:
+        if hasattr(state, category):
+            for key in expectations[category]:
+                if key in getattr(state, category):
+                    if not check_equality(expectations[category][key], getattr(state, category)[key]):
+                        print(category, key)
+                        print(expectations[category][key], getattr(state, category)[key])
+                        return False
+                else:
+                    print('here1')
+                    return False
+        else:
+            print('here2')
+            return False
+    return True
+
+
 def set_domain(domain):
     global P, D
-    p_string=domain+'P'
-    d_string=domain+'D'
+    p_string = domain+'P'
+    d_string = domain+'D'
     P = __import__(p_string)
     D = __import__(d_string)
+    P.run()
 
 
 def determine_value(val_range):
@@ -30,7 +96,7 @@ def determine_value(val_range):
 
 
 def reload_pyhop():
-    pyhop.verticies = []
+    pyhop.reset()
 
 
 reqP = .5  # required percentage for expectations to be true
