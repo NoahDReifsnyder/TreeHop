@@ -1,9 +1,14 @@
 import testing_help as helpper
 import copy
 import matplotlib.pyplot as plt
+import random
 
 
 num_examples = 100
+
+
+def mw_disc(state):
+    pass
 
 
 def run_mw():
@@ -43,20 +48,59 @@ def run_mw():
     plt.show()
 
 
+def bw_disc(state):
+    # disc is that blocks dissapear from quarry, or from my stack.
+    # print(state.on, state.under, state.top, state.top_acquired)
+    decider = random.randint(0, 100)
+    keys = None
+    if decider < 10 or decider > 90:
+        keys = [key for key in vars(state) if '_' not in key and not (key == 'expectations' or key == 'acquired')]
+    if decider < 10:
+        # quarry
+        blocks = [x for x in state.collected if not state.collected[x]]
+        if blocks:
+            block = random.choice(blocks)
+            remove_block(state, block)
+            for key in keys:
+                temp = getattr(state, key)
+                print(key)
+                del temp[block]
+    elif decider > 90:
+        # self
+        blocks = [x for x in state.collected if state.collected[x]]
+        if blocks:
+            block = random.choice(blocks)
+            remove_block(state, block)
+            for key in keys:
+                temp = getattr(state, key)
+                print(key)
+                del temp[block]
+
+
+def remove_block(state, block):
+    on = state.on[block]
+    under = state.under[block]
+    state.on[under] = on
+    state.under[on] = under
+
+
 def run_bw():
     mass_obtained = 0
     action_taken = 0
     for i in range(0, num_examples):
-        print(i)
         helpper.set_domain('BW')
         state = copy.deepcopy(helpper.P.state)
         prev_mass = state.acquired['Agent1'][0]
         while state in helpper.P.policy:
+            print(state)
             action_name = helpper.P.policy[state].name
             action_expectations = helpper.P.policy[state].expectations
+            bw_disc(state)
             if not helpper.check_expectations(state, action_expectations, "immediate"):
                 print(action_name)
                 print("oof")
+            print(state)
+            print()
             state = helpper.take_action(state)
             action_taken += 1
             new_mass = state.acquired['Agent1'][0]

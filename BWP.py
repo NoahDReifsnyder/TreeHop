@@ -17,6 +17,8 @@ def run():
     state.under = {}
     state.on = {}
     state.top = {}
+    state.top_acquired = {}
+    state.collected = {}
     top_list = Queue()
     for i in range(0, 3):
         top_list.put(None)
@@ -27,6 +29,7 @@ def run():
     variance = 2
     for i in range(0, n):
         under = top_list.get()
+        state.under[i] = None
         state.under[under] = i
         state.on[i] = under
         top_list.put(i)
@@ -34,6 +37,8 @@ def run():
         state.weights[i] = (temp - variance, temp + variance)
         state.types[i] = choice(type_list)
         state.top[i] = False
+        state.top_acquired[i] = False
+        state.collected[i] = False
     while not top_list.empty():
         i = top_list.get()
         state.top[i] = True

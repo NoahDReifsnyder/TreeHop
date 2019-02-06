@@ -12,8 +12,17 @@ def collect_block(state, agent, block):
         state.top[block] = False
         temp = state.on[block]
         state.top[temp] = True
-        state.on[block] = None
         state.under[temp] = None
+        old_top = [x for x in state.top_acquired if state.top_acquired[x]]
+        if old_top:
+            old_top = old_top[0]
+            state.top_acquired[old_top] = False
+            state.on[block] = old_top
+            state.under[old_top] = block
+        else:
+            state.on[block] = None
+        state.top_acquired[block] = True
+        state.collected[block] = True
         return [state], preconditions
     else:
         return False
