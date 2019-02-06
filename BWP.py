@@ -47,3 +47,4 @@ def run():
     policy = treehop.pyhop_t(state, goals, True)
     #treehop.print_policy(policy, state)
     gen_expectations(policy, state)
+run()

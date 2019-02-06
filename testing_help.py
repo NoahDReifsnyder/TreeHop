@@ -1,6 +1,4 @@
 # file to run environments for testing
-P = None
-D = None
 import pyhop
 from random import *
 from ExpectationsGenerator import *
@@ -9,6 +7,12 @@ from datetime import datetime
 from importlib import reload
 import sys
 import time
+import matplotlib
+matplotlib.use('agg')
+import matplotlib.pyplot as plt
+P = None
+D = None
+expectation_types = ['immediate', 'informed', 'regression'] # , 'goldilocks']
 
 
 def __ge__(self, other):
@@ -47,6 +51,21 @@ def __le__(self, other):
         return round(self, 2) <= round(other, 2)
 
 
+def plot(data):
+    for expectation in expectation_types:
+        action_lists = sorted(action_counter[expectation].items())
+        action_x, action_y = zip(*action_lists)
+        print(action_y)
+        action_y = list(action_y)
+        prev = 0
+        for idx, val in enumerate(action_y):
+            action_y[idx] = val + prev
+            prev = action_y[idx]
+        print(action_y)
+        plt.plot(action_x, action_y)
+    plt.savefig("fig.png")
+
+
 def check_equality(first, second):
     if type(first) == tuple:
         if type(second) == tuple:
@@ -59,6 +78,8 @@ def check_equality(first, second):
 
 def check_expectations(state, expectations, exp_type):
     expectations = getattr(expectations, exp_type)
+    if exp_type == 'regression':
+        print(expectations)
     for category in expectations:
         if hasattr(state, category):
             for key in expectations[category]:
@@ -68,10 +89,8 @@ def check_expectations(state, expectations, exp_type):
                         print(expectations[category][key], getattr(state, category)[key])
                         return False
                 else:
-                    print('here1')
                     return False
         else:
-            print('here2')
             return False
     return True
 
@@ -95,19 +114,30 @@ def determine_value(val_range):
     return retval
 
 
+def add_error(expectation):
+    global errors
+    if expectation not in errors:
+        errors[expectation] = 0
+    errors[expectation] += 1
+
+
 def reload_pyhop():
     pyhop.reset()
 
 
 reqP = .5  # required percentage for expectations to be true
-counter = 0  # keeps track of actions taken
+action_counter = {}  # keeps track of actions taken
+errors = {}
 
 
-def take_action(state):
+def take_action(state, action, i, expectation):
     global counter
+    if expectation not in action_counter:
+        action_counter[expectation] = {}
+    if i not in action_counter[expectation]:
+        action_counter[expectation][i] = 0
     prev = copy.deepcopy(state)
-    counter += 1
-    action = P.policy[state]
+    action_counter[expectation][i] += 1
     returnval = getattr(D, action.name[0])(state, *action.name[1:])
     state = action.children[0]
     for numeric_value in pyhop.numeric_values:

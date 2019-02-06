@@ -278,7 +278,10 @@ class Tau:
                             temp_max = next_node[1] - prev_node[1]
                             num_eff[key][val] = (temp_min, temp_max)
                 new_1 = comp_num_eff(vertex, num_eff, expectations)
-                new_2 = o_minus((o_minus(vertex.preconditions, vertex.node.effects[last_vertex.node])), expectations)
+                temp = o_minus(vertex.preconditions, vertex.node.effects[last_vertex.node])
+                print(temp, vertex.preconditions, vertex.node.effects[last_vertex.node])
+                # print(vertex, last_vertex)
+                new_2 = o_minus(temp, expectations)
                 new = o_times(new_1, new_2)
                 setattr(vertex.expectations, exp_type, o_times(getattr(vertex.expectations, exp_type), new))
                 vertex.added += 1
@@ -453,7 +456,7 @@ def gen_expectations(policy, starting_state):
     tau = Tau(graph)
     tau.gen_regressed_expectations('regression')
     #print("finished regression")
-    tau.gen_regressed_expectations('goldilocks')
+    #tau.gen_regressed_expectations('goldilocks')
     #print("finished goldilocks")
     #print_exp(policy)
     return
