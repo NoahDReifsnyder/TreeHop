@@ -12,8 +12,8 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 P = None
 D = None
-expectation_types = ['immediate', 'informed', 'regression'] # , 'goldilocks']
-
+expectation_types = ['immediate', 'informed', 'regression', 'goldilocks']
+expectation_types = ['regression']
 
 def __ge__(self, other):
     if type(self) == str:
@@ -67,13 +67,23 @@ def plot(data):
 
 
 def check_equality(first, second):
-    if type(first) == tuple:
-        if type(second) == tuple:
-            return __ge__(second[0], first[0]) and __le__(second[1], first[1])
-        else:
-            return False
+    if type(first) == dict:
+        first = first.keys()
     else:
-        return first == second
+        first = [first]
+    if type(second) == dict:
+        second = second.keys()
+    else:
+        second = [second]
+    for f in first:
+        for s in second:
+            if type(f) == tuple:
+                if type(s) == tuple:
+                    return __ge__(s[0], f[0]) and __le__(s[1], f[1])
+                else:
+                    return False
+            else:
+                return f == s
 
 
 def check_expectations(state, expectations, exp_type):
@@ -87,6 +97,7 @@ def check_expectations(state, expectations, exp_type):
                     if not check_equality(expectations[category][key], getattr(state, category)[key]):
                         print(category, key)
                         print(expectations[category][key], getattr(state, category)[key])
+                        print()
                         return False
                 else:
                     return False

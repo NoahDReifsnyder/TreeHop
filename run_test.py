@@ -19,26 +19,28 @@ def mw_disc(state):
 def run_mw():
     fuel_consumed = 0
     refuels = 0
-    for i in range(0, num_examples):
-        print(i)
-        helpper.set_domain('MW')
-        state = copy.deepcopy(helpper.P.state)
-        prev_fuel = state.fuel['Agent1'][0]
-        while state in helpper.P.policy:
-            action_name = helpper.P.policy[state].name
-            action_expectations = helpper.P.policy[state].expectations
-            action = helpper.P.policy[state]
-            if not helpper.check_expectations(state, action_expectations, "immediate"):
+    for expectation in helpper.expectation_types:
+        print(expectation)
+        for i in range(0, num_examples):
+            print(i)
+            helpper.set_domain('MW')
+            state = copy.deepcopy(helpper.P.state)
+            prev_fuel = state.fuel['Agent1'][0]
+            while state in helpper.P.policy:
+                action_name = helpper.P.policy[state].name
                 print(action_name)
-                print("oof")
-            state = helpper.take_action(state, action)
-            new_fuel = state.fuel['Agent1'][0]
-            delta_fuel = prev_fuel - new_fuel
-            if action_name[0] != 'refuel':
-                fuel_consumed += delta_fuel
-            else:
-                refuels += 1
-            prev_fuel = new_fuel
+                action_expectations = helpper.P.policy[state].expectations
+                action = helpper.P.policy[state]
+                if not helpper.check_expectations(state, action_expectations, expectation):
+                    print("oof")
+                state = helpper.take_action(state, action, i, expectation)
+                new_fuel = state.fuel['Agent1'][0]
+                delta_fuel = prev_fuel - new_fuel
+                if action_name[0] != 'refuel':
+                    fuel_consumed += delta_fuel
+                else:
+                    refuels += 1
+                prev_fuel = new_fuel
     helpper.plot([])
 
 
@@ -79,6 +81,8 @@ def remove_block(state, block):
         mass = round((mass[0] + mass[1]) / 2, 0)
         old_mass = state.acquired['Agent1']
         state.acquired['Agent1'] = (old_mass[0] - mass, old_mass[1] - mass)
+
+
 def run_bw():
     mass_obtained = {}
     action_taken = 0
