@@ -33,6 +33,8 @@ def run_mw():
                 action = helpper.P.policy[state]
                 if not helpper.check_expectations(state, action_expectations, expectation):
                     print("oof")
+                    helpper.replan(state)
+                    continue
                 state = helpper.take_action(state, action, i, expectation)
                 new_fuel = state.fuel['Agent1'][0]
                 delta_fuel = prev_fuel - new_fuel
@@ -41,6 +43,7 @@ def run_mw():
                 else:
                     refuels += 1
                 prev_fuel = new_fuel
+            print(state.lit)
     helpper.plot([])
 
 
@@ -117,4 +120,4 @@ def run_bw():
     helpper.plot([mass_obtained])
 
 
-run_mw()
+run_bw()

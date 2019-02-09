@@ -24,7 +24,7 @@ class Expectations(object):
             print(exp, getattr(self, exp))
 
 
-def o_plus(dict_a, dict_b):  # TODO: update other operators to reflect better variable names
+def o_plus(dict_a, dict_b):
     new_dict = {}
     key_list = [x for x in dict_b] + [x for x in dict_a]
     key_list = set(key_list)
@@ -278,11 +278,8 @@ class Tau:
                             temp_max = next_node[1] - prev_node[1]
                             num_eff[key][val] = (temp_min, temp_max)
                 new_1 = comp_num_eff(vertex, num_eff, expectations)
-                temp = o_minus(vertex.preconditions, vertex.node.effects[last_vertex.node])
-                print(temp, vertex.preconditions, vertex.node.effects[last_vertex.node])
-                # print(vertex, last_vertex)
-                new_2 = o_minus(temp, expectations)
-                new = o_times(new_1, new_2)
+                temp = o_minus(expectations, vertex.node.effects[last_vertex.node])
+                new = temp
                 setattr(vertex.expectations, exp_type, o_times(getattr(vertex.expectations, exp_type), new))
                 vertex.added += 1
             elif vertex not in self.terminal:
@@ -290,8 +287,14 @@ class Tau:
                 vertex.added += 1
             if vertex.finished():
                 if vertex.children > 0:
+                    preconditions = None
+                    if type(vertex.node) == action_type:
+                        preconditions = vertex.preconditions
+                    else:
+                        preconditions = last_vertex.preconditions
+                        pass
                     div_result = o_divide(getattr(vertex.expectations, exp_type), vertex.children)
-                    setattr(vertex.expectations, exp_type, div_result)
+                    setattr(vertex.expectations, exp_type, o_plus(preconditions, div_result))
                 parents = [x for (x, y) in self.edges if y == vertex]
                 for parent in parents:
                     q.put((parent, copy.deepcopy(getattr(vertex.expectations, exp_type)), vertex))
@@ -456,7 +459,7 @@ def gen_expectations(policy, starting_state):
     tau = Tau(graph)
     tau.gen_regressed_expectations('regression')
     #print("finished regression")
-    #tau.gen_regressed_expectations('goldilocks')
+    tau.gen_regressed_expectations('goldilocks')
     #print("finished goldilocks")
     #print_exp(policy)
     return

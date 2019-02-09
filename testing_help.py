@@ -10,10 +10,11 @@ import time
 import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
+import pyhop as treehop
 P = None
 D = None
 expectation_types = ['immediate', 'informed', 'regression', 'goldilocks']
-expectation_types = ['regression']
+# expectation_types = ['regression']
 
 def __ge__(self, other):
     if type(self) == str:
@@ -79,6 +80,7 @@ def check_equality(first, second):
         for s in second:
             if type(f) == tuple:
                 if type(s) == tuple:
+                    print(f, s)
                     return __ge__(s[0], f[0]) and __le__(s[1], f[1])
                 else:
                     return False
@@ -88,17 +90,19 @@ def check_equality(first, second):
 
 def check_expectations(state, expectations, exp_type):
     expectations = getattr(expectations, exp_type)
-    if exp_type == 'regression':
-        print(expectations)
     for category in expectations:
         if hasattr(state, category):
             for key in expectations[category]:
                 if key in getattr(state, category):
-                    if not check_equality(expectations[category][key], getattr(state, category)[key]):
-                        print(category, key)
-                        print(expectations[category][key], getattr(state, category)[key])
-                        print()
-                        return False
+                    try:
+                        if not check_equality(expectations[category][key], getattr(state, category)[key]):
+                            print(category, key)
+                            print(expectations[category][key], getattr(state, category)[key])
+                            print()
+                            return False
+                    except Exception as e:
+                        print(expectations)
+                        time.sleep(10)
                 else:
                     return False
         else:
@@ -134,6 +138,14 @@ def add_error(expectation):
 
 def reload_pyhop():
     pyhop.reset()
+
+
+def replan(state):
+    delattr(state, "expectations")
+    reload_pyhop()
+    P.policy = treehop.pyhop_t(state, original_call=True)
+    gen_expectations(P.policy, state)
+    pass
 
 
 reqP = .5  # required percentage for expectations to be true

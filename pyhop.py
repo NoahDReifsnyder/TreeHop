@@ -307,7 +307,7 @@ def reset():
     Policy = {}
 
 
-def pyhop_t(state, tasks, original_call=False):
+def pyhop_t(state, tasks=goals, original_call=False):
     """
     Try to find a plan that accomplishes tasks in state. 
     If successful, return the plan. Otherwise return False.
