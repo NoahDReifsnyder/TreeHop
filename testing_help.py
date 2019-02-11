@@ -14,7 +14,7 @@ import pyhop as treehop
 P = None
 D = None
 expectation_types = ['immediate', 'informed', 'regression', 'goldilocks']
-# expectation_types = ['regression']
+expectation_types = ['goldilocks']
 
 def __ge__(self, other):
     if type(self) == str:
@@ -68,6 +68,7 @@ def plot(data):
 
 
 def check_equality(first, second):
+    print(first, second)
     if type(first) == dict:
         first = first.keys()
     else:
@@ -80,8 +81,19 @@ def check_equality(first, second):
         for s in second:
             if type(f) == tuple:
                 if type(s) == tuple:
-                    print(f, s)
-                    return __ge__(s[0], f[0]) and __le__(s[1], f[1])
+                    print(f, 'and',  s)
+                    if type(f[0]) == tuple:
+                        reg = True
+                        inf = True
+                        if f[0]:
+                            f_1 = f[0]
+                            reg = __ge__(s[0], f_1[0]) and __le__(s[1], f_1[1])
+                        if f[1]:
+                            f_2 = list(f[1].keys())[0]
+                            inf = __ge__(s[0], f_2[0]) and __le__(s[1], f_2[1])
+                        return reg and inf
+                    else:
+                        return __ge__(s[0], f[0]) and __le__(s[1], f[1])
                 else:
                     return False
             else:
@@ -94,15 +106,11 @@ def check_expectations(state, expectations, exp_type):
         if hasattr(state, category):
             for key in expectations[category]:
                 if key in getattr(state, category):
-                    try:
-                        if not check_equality(expectations[category][key], getattr(state, category)[key]):
-                            print(category, key)
-                            print(expectations[category][key], getattr(state, category)[key])
-                            print()
-                            return False
-                    except Exception as e:
-                        print(expectations)
-                        time.sleep(10)
+                    if not check_equality(expectations[category][key], getattr(state, category)[key]):
+                        print(category, key)
+                        print(expectations[category][key], getattr(state, category)[key])
+                        print()
+                        return False
                 else:
                     return False
         else:

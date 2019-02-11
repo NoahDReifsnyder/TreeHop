@@ -461,5 +461,5 @@ def gen_expectations(policy, starting_state):
     #print("finished regression")
     tau.gen_regressed_expectations('goldilocks')
     #print("finished goldilocks")
-    print_exp(policy)
+    #print_exp(policy)
     return

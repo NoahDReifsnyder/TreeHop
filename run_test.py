@@ -2,7 +2,7 @@ import testing_help as helpper
 import copy
 import random
 import time
-num_examples = 20
+num_examples = 5
 
 
 def mw_disc(state):
@@ -120,4 +120,4 @@ def run_bw():
     helpper.plot([mass_obtained])
 
 
-run_bw()
+run_mw()
