@@ -23,7 +23,7 @@ def run():
     for i in range(0, 3):
         top_list.put(None)
     type_list = [1, 2, 3]
-    n = 400
+    n = 500
     collection_weight = 500
     max_weight = 100
     variance = 2

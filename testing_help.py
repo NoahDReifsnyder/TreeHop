@@ -8,7 +8,7 @@ from importlib import reload
 import sys
 import time
 import matplotlib
-matplotlib.use('agg')
+#matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import pyhop as treehop
 P = None
@@ -53,20 +53,27 @@ def __le__(self, other):
 
 
 def plot(data):
-    for expectation in expectation_types:
-        print(expectation)
-        action_lists = sorted(action_counter[expectation].items())
-        action_x, action_y = zip(*action_lists)
-        print(action_y)
-        action_y = list(action_y)
-        prev = 0
-        for idx, val in enumerate(action_y):
-            action_y[idx] = val + prev
-            prev = action_y[idx]
-        print(action_y)
-        plt.plot(action_x, action_y, label=expectation)
-    legend = plt.legend(loc='upper left', shadow=True)
-    plt.savefig("fig.png")
+    data.append(action_counter)
+    counter = 0;
+    action_counter['title'] = "Actions"
+    for d in data:
+        for expectation in expectation_types:
+            print(expectation)
+            d_lists = sorted(d[expectation].items())
+            d_x, d_y = zip(*d_lists)
+            d_y = list(d_y)
+            prev = 0
+            for idx, val in enumerate(d_y):
+                d_y[idx] = val + prev
+                prev = d_y[idx]
+            plt.plot(d_x, d_y, label=expectation)
+        plt.legend(loc='upper left', shadow=True)
+        title = d['title']+'.png'
+        counter += 1
+        plt.title(title)
+        plt.show()
+        plt.savefig(title)
+
 
 
 def check_equality(first, second):

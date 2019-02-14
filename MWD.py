@@ -105,7 +105,7 @@ def move_down(state, agent):
         return False
 
 
-treehop.declare_operators(move_forward, move_back, move_up, move_down, light, refuel)
+treehop.declare_operators(move_forward, move_back, move_up, move_down, light, refuel, repair)
 
 
 def find_cost(start, end, n):
@@ -118,6 +118,8 @@ def find_cost(start, end, n):
 
 
 def achieve_goal(state, agent, end, n):
+    if state.repair[agent]:
+        return [(repair, agent), ('achieve_goal', agent, end, n)]
     if state.fuel[agent][0] < p_G_eff:
         return[('refuel', agent), ('achieve_goal', agent, end, n)]
     start = state.agent[agent]

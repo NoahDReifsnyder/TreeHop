@@ -2,26 +2,29 @@ import testing_help as helpper
 import copy
 import random
 import time
-num_examples = 10
-
+num_examples = 25
+mw_modifier = 0
+mw_modified = False
 
 def mw_disc(state):
+    global mw_modifier, mw_modified
+    if not state.repair['Agent1']:
+        mw_modified = False
+        mw_modifier = 0
     decider = random.randint(0,100)
     if decider < 10:
-        # use more fuel
-        pass
-    if decider >= 90:
-        # use less fuel
-        pass
-    pass
+        mw_modified = True
+        mw_modifier = 3
+        state.repair['Agent'] = True
 
 
 def run_mw():
-    fuel_consumed = 0
+    fuel_consumed = {'title': 'Fuel Consumed'}
     refuels = 0
     for expectation in helpper.expectation_types:
-        print(expectation)
+        fuel_consumed[expectation] = {}
         for i in range(0, num_examples):
+            fuel_consumed[expectation][i] = 0
             print(i)
             helpper.set_domain('MW')
             state = copy.deepcopy(helpper.P.state)
@@ -35,15 +38,18 @@ def run_mw():
                     helpper.replan(state)
                     continue
                 state = helpper.take_action(state, action, i, expectation)
+                mw_disc(state)
+                fixed_fuel = state.fuel['Agent1'][0] + mw_modifier
+                state.fuel['Agent1'] = (fixed_fuel, fixed_fuel)
                 new_fuel = state.fuel['Agent1'][0]
                 delta_fuel = prev_fuel - new_fuel
                 if action_name[0] != 'refuel':
-                    fuel_consumed += delta_fuel
+                    fuel_consumed[expectation][i] += delta_fuel
                 else:
                     refuels += 1
                 prev_fuel = new_fuel
             print(state.lit)
-    helpper.plot([])
+    helpper.plot([fuel_consumed])
 
 
 def bw_disc(state):
@@ -86,37 +92,30 @@ def remove_block(state, block):
 
 
 def run_bw():
-    mass_obtained = {}
-    action_taken = 0
+    mass_obtained = {'title': "Mass Obtained"}
     for expectation in helpper.expectation_types:
+        mass_obtained[expectation]={}
         for i in range(0, num_examples):
             print(i)
-            mass_obtained[i] = 0
+            mass_obtained[expectation][i] = 0
             helpper.set_domain('BW')
             state = copy.deepcopy(helpper.P.state)
             prev_mass = state.acquired['Agent1'][0]
             while state in helpper.P.policy:
                 action_name = helpper.P.policy[state].name
                 action = helpper.P.policy[state]
-                bw_disc(state)
                 if not helpper.check_expectations(state, state.expectations, expectation):
                     print(action_name)
                     print("oof")
-                try:
-                    state = helpper.take_action(state, action, i, expectation)
-                except KeyError as e:
-                    print(e)
-                    time.sleep(1)
-                    helpper.add_error()
-                    break
-                action_taken += 1
+                state = helpper.take_action(state, action, i, expectation)
+                bw_disc(state)
                 new_mass = state.acquired['Agent1'][0]
                 delta_mass = new_mass - prev_mass
-                mass_obtained[i] += delta_mass
+                mass_obtained[expectation][i] += delta_mass
                 prev_mass = new_mass
             pass
         pass
     helpper.plot([mass_obtained])
 
 
-run_mw()
+run_bw()

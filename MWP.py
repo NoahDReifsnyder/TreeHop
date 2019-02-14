@@ -15,11 +15,11 @@ def run():
     state.lit = {"B1": 0, "B2": 0, "B3": 0}
     state.beacons = {}
     state.agent = {'Agent1': None}
-    state.fuel = {'Agent1': (5, 5)}
+    state.fuel = {'Agent1': (20, 20)}
     treehop.declare_numeric("fuel")
     state.max_fuel = copy.deepcopy(state.fuel)
     state.repair = {'Agent1': False}
-    n = 5
+    n = 10
     position = n * n - 1
     state.agent['Agent1'] = position
     placed = []
