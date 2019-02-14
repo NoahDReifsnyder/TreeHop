@@ -14,7 +14,7 @@ import pyhop as treehop
 P = None
 D = None
 expectation_types = ['immediate', 'informed', 'regression', 'goldilocks']
-expectation_types = ['goldilocks']
+#expectation_types = ['goldilocks']
 
 def __ge__(self, other):
     if type(self) == str:
@@ -54,6 +54,7 @@ def __le__(self, other):
 
 def plot(data):
     for expectation in expectation_types:
+        print(expectation)
         action_lists = sorted(action_counter[expectation].items())
         action_x, action_y = zip(*action_lists)
         print(action_y)
@@ -63,12 +64,12 @@ def plot(data):
             action_y[idx] = val + prev
             prev = action_y[idx]
         print(action_y)
-        plt.plot(action_x, action_y)
+        plt.plot(action_x, action_y, label=expectation)
+    legend = plt.legend(loc='upper left', shadow=True)
     plt.savefig("fig.png")
 
 
 def check_equality(first, second):
-    print(first, second)
     if type(first) == dict:
         first = first.keys()
     else:
@@ -81,7 +82,6 @@ def check_equality(first, second):
         for s in second:
             if type(f) == tuple:
                 if type(s) == tuple:
-                    print(f, 'and',  s)
                     if type(f[0]) == tuple:
                         reg = True
                         inf = True
@@ -107,9 +107,6 @@ def check_expectations(state, expectations, exp_type):
             for key in expectations[category]:
                 if key in getattr(state, category):
                     if not check_equality(expectations[category][key], getattr(state, category)[key]):
-                        print(category, key)
-                        print(expectations[category][key], getattr(state, category)[key])
-                        print()
                         return False
                 else:
                     return False

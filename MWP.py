@@ -70,4 +70,3 @@ def run():
     # treehop.print_policy(policy, state)
     # treehop.print_state(state)
     gen_expectations(policy, state)
-run()

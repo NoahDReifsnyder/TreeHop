@@ -2,7 +2,7 @@ import testing_help as helpper
 import copy
 import random
 import time
-num_examples = 5
+num_examples = 10
 
 
 def mw_disc(state):
@@ -28,7 +28,6 @@ def run_mw():
             prev_fuel = state.fuel['Agent1'][0]
             while state in helpper.P.policy:
                 action_name = helpper.P.policy[state].name
-                print(action_name)
                 action_expectations = helpper.P.policy[state].expectations
                 action = helpper.P.policy[state]
                 if not helpper.check_expectations(state, action_expectations, expectation):
