@@ -3,7 +3,7 @@ import copy
 import random
 from queue import Queue
 import time
-num_examples = 20
+num_examples = 100
 mw_modifier = 0
 mw_modified = False
 
@@ -127,18 +127,40 @@ def run_bw():
             helpper.set_domain('BW')
             state = copy.deepcopy(helpper.P.state)
             prev_mass = state.acquired['Agent1'][0]
+            actions = Queue()
             while state in helpper.P.policy:
-                action_name = helpper.P.policy[state].name
                 action = helpper.P.policy[state]
-                if not helpper.check_expectations(state, state.expectations, expectation):
-                    print(action_name)
+                actions.put(action)
+                state = action.children[0]
+            state = copy.deepcopy(helpper.P.state)
+            while not actions.empty():
+                action = actions.get()
+                action_name = action.name
+                expectations = action.expectations
+                if not helpper.check_expectations(state, expectations, expectation):
                     print("oof")
+                    helpper.replan(state)
+                    actions = Queue()
+                    while state in helpper.P.policy:
+                        action = helpper.P.policy[state]
+                        actions.put(action)
+                        state = action.children[0]
+                    continue
                 state = helpper.take_action(state, action, i, expectation)
-                bw_disc(state)
+                if not state:
+                    break
                 new_mass = state.acquired['Agent1'][0]
+                bw_disc(state)
                 delta_mass = new_mass - prev_mass
                 mass_obtained[expectation][i] += delta_mass
-                prev_mass = new_mass
+                prev_mass = state.acquired['Agent1'][0]
+            if state:
+                print(state.acquired)
+                if state.acquired['Agent1'][0]<500:
+                    print("\n\n\n\n")
+                    helpper.add_error(expectation)
+            else:
+                print('Failed')
             pass
         pass
     helpper.plot([mass_obtained])

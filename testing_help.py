@@ -61,6 +61,7 @@ def plot(data):
             values.append(errors[key])
         else:
             values.append(0)
+    print(errors)
     plt.bar(objects,values)
     plt.savefig("error.png")
     plt.clf()
@@ -68,6 +69,7 @@ def plot(data):
     counter = 0;
     action_counter['title'] = "Actions"
     for d in data:
+        print(d)
         for expectation in expectation_types:
             print(expectation)
             d_lists = sorted(d[expectation].items())

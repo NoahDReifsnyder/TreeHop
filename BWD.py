@@ -43,20 +43,14 @@ def move_block(state, agent, block):
 
 treehop.declare_operators(collect_block, move_block)
 
-type_list = Queue()
-type_list.put(1)
-type_list.put(2)
-type_list.put(3)
 
 def get_largest_next_type(state):
     top_list = [x for x in state.top if state.top[x]]
     largest = (None, 0)
-    use_type = type_list.get()
-    type_list.put(use_type)
-    use_type_list = [x for x in state.weights if state.types[x] == use_type and x in top_list]
+    use_type_list = [x for x in state.weights if x in top_list]
     while not use_type_list:
         top_list = [x for x in state.under if state.under[x] in top_list]
-        use_type_list = [x for x in state.weights if state.types[x] == use_type and x in top_list]
+        use_type_list = [x for x in state.weights if x in top_list]
     for block in use_type_list:
         if state.weights[block][0] > largest[1]:
             largest = (block, state.weights[block][0])
