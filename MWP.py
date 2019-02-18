@@ -15,7 +15,7 @@ def run():
     state.lit = {"B1": 0, "B2": 0, "B3": 0}
     state.beacons = {}
     state.agent = {'Agent1': None}
-    state.fuel = {'Agent1': (20, 20)}
+    state.fuel = {'Agent1': (10, 10), 'Beacon': (3, 3)}
     treehop.declare_numeric("fuel")
     state.max_fuel = copy.deepcopy(state.fuel)
     state.repair = {'Agent1': False}
@@ -70,3 +70,4 @@ def run():
     # treehop.print_policy(policy, state)
     # treehop.print_state(state)
     gen_expectations(policy, state)
+

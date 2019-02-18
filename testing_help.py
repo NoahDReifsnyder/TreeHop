@@ -8,13 +8,13 @@ from importlib import reload
 import sys
 import time
 import matplotlib
-#matplotlib.use('agg')
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import pyhop as treehop
 P = None
 D = None
 expectation_types = ['immediate', 'informed', 'regression', 'goldilocks']
-#expectation_types = ['goldilocks']
+# expectation_types = ['informed']
 
 def __ge__(self, other):
     if type(self) == str:
@@ -53,6 +53,17 @@ def __le__(self, other):
 
 
 def plot(data):
+    objects = []
+    values = []
+    for key in expectation_types:
+        objects.append(key)
+        if key in errors:
+            values.append(errors[key])
+        else:
+            values.append(0)
+    plt.bar(objects,values)
+    plt.savefig("error.png")
+    plt.clf()
     data.append(action_counter)
     counter = 0;
     action_counter['title'] = "Actions"
@@ -71,8 +82,8 @@ def plot(data):
         title = d['title']+'.png'
         counter += 1
         plt.title(title)
-        plt.show()
         plt.savefig(title)
+        plt.clf()
 
 
 
@@ -156,7 +167,8 @@ def replan(state):
     delattr(state, "expectations")
     reload_pyhop()
     P.policy = treehop.pyhop_t(state, original_call=True)
-    gen_expectations(P.policy, state)
+    if P.policy != {}:
+        gen_expectations(P.policy, state)
     pass
 
 
@@ -174,7 +186,10 @@ def take_action(state, action, i, expectation):
     prev = copy.deepcopy(state)
     action_counter[expectation][i] += 1
     returnval = getattr(D, action.name[0])(state, *action.name[1:])
-    state = action.children[0]
+    if not returnval:
+        add_error(expectation)
+        return False
+    state = returnval[0][0]
     for numeric_value in pyhop.numeric_values:
         for key in getattr(state, numeric_value):
             getattr(state, numeric_value)[key] = determine_value(getattr(state, numeric_value)[key])

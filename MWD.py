@@ -9,6 +9,13 @@ p_G_eff = G_eff + err
 s_G_eff = G_eff - err
 repair_cost = 5
 
+
+def energy(state, none):
+    prev = state.fuel['Beacon']
+    state.fuel['Beacon'] = (prev[0] + 1, prev[1] + 1)
+    return [state], {}
+
+
 def refuel(state, agent):
     t_p_g_eff = p_G_eff
     t_s_g_eff = s_G_eff
@@ -24,9 +31,11 @@ def refuel(state, agent):
 
 
 def light(state, agent, beacon):
-    if not state.lit[beacon] and state.agent[agent] == state.beacons[beacon]:
-        preconditions = {'lit': {beacon: 0}, 'agent': {agent: state.beacons[beacon]}}
+    if not state.lit[beacon] and state.agent[agent] == state.beacons[beacon] and state.fuel['Beacon'][0] >= 1:
+        preconditions = {'lit': {beacon: 0}, 'agent': {agent: state.beacons[beacon]}, 'fuel': {'Beacon': (1, 'inf')}}
         state.lit[beacon] = 1
+        prev = state.fuel['Beacon']
+        state.fuel['Beacon'] = (prev[0] - 1, prev[1] - 1)
         return[state], preconditions
     else:
         return False
@@ -105,7 +114,7 @@ def move_down(state, agent):
         return False
 
 
-treehop.declare_operators(move_forward, move_back, move_up, move_down, light, refuel, repair)
+treehop.declare_operators(move_forward, move_back, move_up, move_down, light, refuel, repair, energy)
 
 
 def find_cost(start, end, n):
@@ -171,10 +180,15 @@ treehop.declare_methods('achieve_goal', achieve_goal)
 
 def light_all(state, agent, n):
     build = []
+    t_energy = state.fuel['Beacon'][0]
     for b in state.lit:
         if state.lit[b] == 0:
             build.append(('achieve_goal', agent, state.beacons[b], n))
+            if t_energy < 1:
+                build.append(('energy', None))
+                t_energy += 1
             build.append(('light', agent, b))
+            t_energy -= 1
     return build
 
 

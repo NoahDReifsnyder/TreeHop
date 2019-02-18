@@ -1,8 +1,9 @@
 import testing_help as helpper
 import copy
 import random
+from queue import Queue
 import time
-num_examples = 25
+num_examples = 20
 mw_modifier = 0
 mw_modified = False
 
@@ -12,10 +13,15 @@ def mw_disc(state):
         mw_modified = False
         mw_modifier = 0
     decider = random.randint(0,100)
-    if decider < 10:
+    if decider < 6:
         mw_modified = True
         mw_modifier = 3
         state.repair['Agent'] = True
+    if 20 < decider < 26:
+        prev = state.fuel['Beacon']
+        if prev[0] >= 1:
+            state.fuel['Beacon'] = (prev[0] - 1, prev[1] - 1)
+
 
 
 def run_mw():
@@ -28,17 +34,34 @@ def run_mw():
             print(i)
             helpper.set_domain('MW')
             state = copy.deepcopy(helpper.P.state)
+            print('start', state.lit)
             prev_fuel = state.fuel['Agent1'][0]
+            actions = Queue()
             while state in helpper.P.policy:
-                action_name = helpper.P.policy[state].name
-                action_expectations = helpper.P.policy[state].expectations
                 action = helpper.P.policy[state]
+                actions.put(action)
+                state = action.children[0]
+            state = copy.deepcopy(helpper.P.state)
+            while not actions.empty():
+                action = actions.get()
+                action_name = action.name
+                action_expectations = action.expectations
                 if not helpper.check_expectations(state, action_expectations, expectation):
                     print("oof")
                     helpper.replan(state)
+                    actions = Queue()
+                    while state in helpper.P.policy:
+                        action = helpper.P.policy[state]
+                        actions.put(action)
+                        state = action.children[0]
                     continue
+                # if action.name[0] == 'light':
+                #     print('here1', state.fuel)
                 state = helpper.take_action(state, action, i, expectation)
+                if not state:
+                    break
                 mw_disc(state)
+                #print(action.name, state.fuel)
                 fixed_fuel = state.fuel['Agent1'][0] + mw_modifier
                 state.fuel['Agent1'] = (fixed_fuel, fixed_fuel)
                 new_fuel = state.fuel['Agent1'][0]
@@ -48,7 +71,10 @@ def run_mw():
                 else:
                     refuels += 1
                 prev_fuel = new_fuel
-            print(state.lit)
+            if state:
+                print(state.lit, state.fuel)
+            else:
+                print('Failed')
     helpper.plot([fuel_consumed])
 
 
