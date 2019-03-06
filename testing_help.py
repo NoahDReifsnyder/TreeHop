@@ -52,9 +52,14 @@ def __le__(self, other):
         return round(self, 2) <= round(other, 2)
 
 
-def plot(data):
+def plot(data, use_base=True):
+    global errors, action_counter
     objects = []
     values = []
+    if not use_base:
+        errors = data[0]
+        action_counter = data[1]
+        data = data[2:]
     for key in expectation_types:
         objects.append(key)
         if key in errors:
@@ -66,8 +71,8 @@ def plot(data):
     plt.savefig("error.png")
     plt.clf()
     data.append(action_counter)
-    counter = 0;
-    action_counter['title'] = "Actions"
+    counter = 0
+    print(data)
     for d in data:
         print(d)
         for expectation in expectation_types:
@@ -81,7 +86,7 @@ def plot(data):
                 prev = d_y[idx]
             plt.plot(d_x, d_y, label=expectation)
         plt.legend(loc='upper left', shadow=True)
-        title = d['title']+'.png'
+        title = d['title']
         counter += 1
         plt.title(title)
         plt.savefig(title)

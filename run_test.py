@@ -166,4 +166,4 @@ def run_bw():
     helpper.plot([mass_obtained])
 
 
-run_bw()
+run_mw()
