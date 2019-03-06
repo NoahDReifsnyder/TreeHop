@@ -6,4 +6,4 @@ import time
 
 
 state = treehop.State('state')
-state.fuel = {'Agent1' : [10, 10]}
+state.fuel = {'Agent1': [(0, 10), (0, 10)]}

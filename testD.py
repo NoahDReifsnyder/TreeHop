@@ -8,9 +8,18 @@ err = .1
 ND = True  # Action type
 
 
-def move(state):
+def dec(state, agent, start_t, duration):
     precond = {}
+    interval = state.fuel[agent]
+
     return [state], precond
+
+
+def inc(state, agent, start_t, duration):
+    precond = {}
+    interval = state.fuel[agent]
+
+    return[state], precond
 
 
 def achieve_goal(state):
