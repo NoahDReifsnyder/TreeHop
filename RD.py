@@ -1,7 +1,5 @@
 import pyhop as treehop
-import copy
-from random import *
-
+import numpy
 
 def solve_equation(eq, time):
     eq = eq.replace("t", str(time))
@@ -9,11 +7,11 @@ def solve_equation(eq, time):
     return y
 
 
-def set_fov(state, cam):
+def set_fov(state, cam, left, right, start, end):
     return
 
 
-def set_angle(state, cam):
+def set_angle(state, cam, start, end):
     return
 
 
@@ -25,36 +23,46 @@ treehop.declare_operators(set_fov, set_angle)
 
 
 def achieve_goal(state):
-    left = (0, -1)
-    right = (0, -1)
-    front = (0, -1)
-    back = (0, -1)
+    left, right = furthest(state)
+    left_s, right_s = largest_slopes(state)
     plan = []
-    for actor in state.actors_x:
-        if actor != left[1]:
-            slope = (float(state.actors_x[actor].split("*")[0]))
-            if slope < left[1]:
-                pass
-            pass
-        if actor != right[1]:
-            slope = (float(state.actors_x[actor].split("*")[0]))
-            if slope > right[1]:
-                pass
-            pass
-        pass
-    for actor in state.actors_y:
-        if actor != front[1]:
-            slope = (float(state.actors_y[actor].split("*")[0]))
-            if slope < front[1]:
-                pass
-            pass
-        if actor != back[1]:
-            slope = (float(state.actors_y[actor].split("*")[0]))
-            if slope > back[1]:
-                pass
-            pass
-        pass
+    print(left, right)
+    print(left_s, right_s)
+    angle_l = solve_equation(state.actors_t[left[1]], state.time['time'])
+    angle_r = solve_equation(state.actors_t[right[1]], state.time['time'])
+    angle_l_s = state.actors_t[left[0]]
+    angle_r_s = state.actors_t[right[0]]
+    print(angle_l, angle_r,)
+    numpy.arc
     return plan
 
+
+def largest_slopes(state):
+    left = (None, -1)
+    right = (None, -1)
+    for actor in state.actors_t:
+        slope = (float(state.actors_t[actor].split("*")[0]))
+        if actor != left[1]:
+            if left[0] is None or slope < left[0]:
+                left = (slope, actor)
+        if actor != right[1]:
+            if right[0] is None or slope > right[0]:
+                right = (slope, actor)
+    return left, right
+
+
+def furthest(state):
+    left = (None, -1)
+    right = (None, -1)
+    t = state.time['time']
+    for actor in state.actors_t:
+        loc_t = solve_equation(state.actors_t[actor], t)
+        if actor != left[1]:
+            if left[0] is None or loc_t < left[0]:
+                left = (loc_t, actor)
+        if actor != right[1]:
+            if right[0] is None or loc_t > right[0]:
+                right = (loc_t, actor)
+    return left, right
 
 treehop.declare_methods("achieve_goal", achieve_goal)
