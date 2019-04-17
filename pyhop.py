@@ -321,6 +321,7 @@ def pyhop_t(state, tasks=goals, original_call=False):
 
 
 def seek_plan(state, tasks):
+    print(tasks)
     """
     Workhorse for pyhop. state and tasks are as in pyhop.
     - plan is the current partial plan.

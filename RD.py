@@ -49,61 +49,60 @@ def end_angle(state, cam, theta, time):
     return [state], preconditions
 
 
-def set_l_fov(state, cam, theta):
-    preconditions = {}
-    state.l_fov[cam] = theta
-    return [state], preconditions
-
-
-def set_r_fov(state, cam, theta):
-    preconditions = {}
-    state.r_fov[cam] = theta
-    return [state], preconditions
-
-
 def wait(state, time):
     state.time['time'] += time
     return[state], {}
 
 
-treehop.declare_operators(set_l_fov, set_r_fov, wait, set_fov, set_angle)
+treehop.declare_operators(wait, set_fov, set_angle, end_fov, end_angle)
 
 
 def attach_next(state, cam):
     left, right = furthest(state)
-    print(left, right)
-    # left_s, right_s = largest_slopes(state)
     plan = []
+    time = state.time['time']
     l_y = state.actors_y[left[1]]
     l_x = state.actors_x[left[1]]
-
-    def l_t(new_time, c_time=state.time['time']):
-        return np.arctan2(l_y(new_time), l_x(new_time)) - np.arctan2(l_y(c_time), l_x(c_time))
-
     r_y = state.actors_y[right[1]]
     r_x = state.actors_x[right[1]]
 
-    def r_t(new_time, c_time=state.time['time']):
-        return np.arctan2(r_y(new_time), r_x(new_time)) - np.arctan2(r_y(c_time), r_x(c_time))
+    def l_t(new_time):
+        return np.arctan2(l_y(new_time), l_x(new_time))
 
-    def d_angle(new_time):
-        return (l_t(new_time) - r_t(new_time))/2
+    def r_t(new_time):
+        return np.arctan2(r_y(new_time), r_x(new_time))
 
-    time = state.time['time']
+    def d_l_t(new_time, c_time=time):
+        return l_t(new_time) - l_t(c_time)
+
+    def d_l_angle(new_time, c_time=time):
+        return (l_t(new_time) - l_t(c_time)) / 2
+
+    def d_r_t(new_time, c_time=time):
+        return r_t(new_time) - r_t(c_time)
+
+    def d_r_angle(new_time, c_time=time):
+        return (r_t(new_time) - r_t(c_time)) / -2
+
     if not state.left[left[1]]:
         old = [x for x in state.left if state.left[x]]
         for actor in old:
             state.left[actor] = False
         state.left[left[1]] = True
-        plan.append(('set_fov', cam, l_t))
+        plan.append(('set_fov', cam, d_l_t))
+        plan.append(('set_angle', cam, d_l_angle))
+
     if not state.right[right[1]]:
         old = [x for x in state.right if state.right[x]]
         for actor in old:
             state.right[actor] = False
         state.right[right[1]] = True
-        plan.append(('set_fov', cam, r_t))
+        plan.append(('set_fov', cam, d_r_t))
+        plan.append(('set_angle', cam, d_r_angle))
+
     wait_time = 0
     for t in range(time, time + 100):
+        print(t)
         if wait_time > 0:
             break
         for actor in state.actors_x:
@@ -112,8 +111,10 @@ def attach_next(state, cam):
                 l_x_new = state.actors_x[actor]
                 theta = l_t(t)
                 new_theta = np.arctan2(l_y_new(t), l_x_new(t))
-                if new_theta < theta:
+                if new_theta > theta:
                     wait_time = t - time
+                    plan.append(('end_fov', cam, d_l_t, wait_time))
+                    plan.append(('end_angle', cam, d_l_angle, wait_time))
                     print("left", time, t, actor, left[1], new_theta, theta)
                     break
             if not actor == right[1]:
@@ -121,16 +122,16 @@ def attach_next(state, cam):
                 r_x_new = state.actors_x[actor]
                 theta = r_t(t)
                 new_theta = np.arctan2(r_y_new(t), r_x_new(t))
-                if new_theta > theta:
+                if new_theta < theta:
                     print("right", time, t, actor, right[1], new_theta, theta)
                     wait_time = t - time
-                    # print(time, t)
+                    plan.append(('end_fov', cam, d_r_t, wait_time))
+                    plan.append(('end_angle', cam, d_r_angle, wait_time))
                     break
     if wait_time > 0:
-        plan.append(("wait", wait_time))
-        plan.append(("achieve_goal", cam))
-    print(plan)
+        plan.append(("attach_next", cam))
     return plan
+
 
 def achieve_goal(state, cam):
     left, right = furthest(state)
@@ -153,10 +154,9 @@ def achieve_goal(state, cam):
     def angle(t, val=right[0]+(d_t/2)):
         return val
 
-    print(fov(10), angle(10))
     plan.append(('set_fov', cam, fov))
     plan.append(('set_angle', cam, angle))
-    plan.append(('attach_next', state, cam))
+    plan.append(('attach_next', cam))
     return plan
 
 
@@ -176,4 +176,6 @@ def furthest(state):
                 right = (loc_t, actor)
     return left, right
 
+
 treehop.declare_methods("achieve_goal", achieve_goal)
+treehop.declare_methods("attach_next", attach_next)

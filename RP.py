@@ -33,7 +33,5 @@ for i in range(0, num_actors):
 print(state.actors_y[1], state.actors_y[2])
 goals = [('achieve_goal', 'cam1')]
 treehop.declare_goals(goals)
-#policy = treehop.pyhop_t(state, original_call=True)
-#treehop.print_policy(policy, state)
-plan = achieve_goal(state, 'cam1')
-print(plan)
+policy = treehop.pyhop_t(state, original_call=True)
+treehop.print_policy(policy, state)
