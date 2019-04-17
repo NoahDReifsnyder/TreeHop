@@ -1,6 +1,13 @@
 import pyhop as treehop
 import numpy as np
 from time import sleep
+counter = 0
+
+
+def get_id():
+    global counter
+    counter += 1
+    return counter
 
 
 def set_fov(state, cam, theta):
@@ -8,7 +15,7 @@ def set_fov(state, cam, theta):
     old_fov = state.fov[cam]
 
     def new_fov(t):
-        return theta(t) + old_fov(t)
+        return theta(t) + old_fov(t - state.time['time'])
 
     state.fov[cam] = new_fov
     return [state], preconditions
@@ -19,7 +26,7 @@ def end_fov(state, cam, theta, time):
     old_fov = state.fov[cam]
 
     def new_fov(t):
-        return old_fov(t) - theta(t)
+        return old_fov(t) - theta(t) + theta(time)
 
     state.fov[cam] = new_fov
     state.time['time'] += time
