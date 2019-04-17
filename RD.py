@@ -1,86 +1,163 @@
 import pyhop as treehop
 import numpy as np
+from time import sleep
 
+
+def set_fov(state, cam, theta):
+    preconditions = {}
+    old_fov = state.fov[cam]
+
+    def new_fov(t):
+        return theta(t) + old_fov(t)
+
+    state.fov[cam] = new_fov
+    return [state], preconditions
+
+
+def end_fov(state, cam, theta, time):
+    preconditions = {}
+    old_fov = state.fov[cam]
+
+    def new_fov(t):
+        return old_fov(t) - theta(t)
+
+    state.fov[cam] = new_fov
+    state.time['time'] += time
+    return [state], preconditions
+
+
+def set_angle(state, cam, theta):
+    preconditions = {}
+    old_angle = state.angle[cam]
+
+    def new_angle(t):
+        return theta(t) + old_angle(t)
+
+    state.angle[cam] = new_angle
+    return [state], preconditions
+
+
+def end_angle(state, cam, theta, time):
+    preconditions = {}
+    old_angle = state.angle[cam]
+
+    def new_angle(t):
+        return old_angle(t) - theta(t)
+
+    state.fov[cam] = new_angle
+    state.time['time'] += time
+    return [state], preconditions
 
 
 def set_l_fov(state, cam, theta):
+    preconditions = {}
     state.l_fov[cam] = theta
-    return
+    return [state], preconditions
 
 
 def set_r_fov(state, cam, theta):
+    preconditions = {}
     state.r_fov[cam] = theta
-    return
+    return [state], preconditions
 
 
-def wait(state):
-    return
+def wait(state, time):
+    state.time['time'] += time
+    return[state], {}
 
 
-treehop.declare_operators(set_l_fov, set_r_fov, wait)
+treehop.declare_operators(set_l_fov, set_r_fov, wait, set_fov, set_angle)
 
 
-def achieve_goal(state, cam):
+def attach_next(state, cam):
     left, right = furthest(state)
+    print(left, right)
     # left_s, right_s = largest_slopes(state)
     plan = []
-    print(left, right)
     l_y = state.actors_y[left[1]]
     l_x = state.actors_x[left[1]]
 
-    def l_t(t):
-        return np.arctan2(l_y(t), l_x(t))
+    def l_t(new_time, c_time=state.time['time']):
+        return np.arctan2(l_y(new_time), l_x(new_time)) - np.arctan2(l_y(c_time), l_x(c_time))
+
     r_y = state.actors_y[right[1]]
     r_x = state.actors_x[right[1]]
 
-    def r_t(t):
-        return np.arctan2(r_y(t), r_x(t))
+    def r_t(new_time, c_time=state.time['time']):
+        return np.arctan2(r_y(new_time), r_x(new_time)) - np.arctan2(r_y(c_time), r_x(c_time))
+
+    def d_angle(new_time):
+        return (l_t(new_time) - r_t(new_time))/2
+
     time = state.time['time']
-    if not state.l_fov[cam] == l_t:
-        plan.append(('set_l_fov', cam, l_t))
-    if not state.r_fov[cam] == r_t:
-        plan.append(('set_r_fov', cam, r_t))
+    if not state.left[left[1]]:
+        old = [x for x in state.left if state.left[x]]
+        for actor in old:
+            state.left[actor] = False
+        state.left[left[1]] = True
+        plan.append(('set_fov', cam, l_t))
+    if not state.right[right[1]]:
+        old = [x for x in state.right if state.right[x]]
+        for actor in old:
+            state.right[actor] = False
+        state.right[right[1]] = True
+        plan.append(('set_fov', cam, r_t))
     wait_time = 0
-    for t in range(0, 100):
+    for t in range(time, time + 100):
         if wait_time > 0:
             break
         for actor in state.actors_x:
             if not actor == left[1]:
                 l_y_new = state.actors_y[actor]
                 l_x_new = state.actors_x[actor]
-                t = l_t(t)
-                new_t = np.arctan2(l_y_new(t), l_x_new(t))
-                if new_t < t:
-                    print(t, new_t)
-                    wait_time = t
+                theta = l_t(t)
+                new_theta = np.arctan2(l_y_new(t), l_x_new(t))
+                if new_theta < theta:
+                    wait_time = t - time
+                    print("left", time, t, actor, left[1], new_theta, theta)
                     break
             if not actor == right[1]:
                 r_y_new = state.actors_y[actor]
                 r_x_new = state.actors_x[actor]
-                t = r_t(t)
-                new_t = np.arctan2(r_y_new(t), r_x_new(t))
-                if new_t > t:
-                    print(t, new_t)
-                    wait_time = t
+                theta = r_t(t)
+                new_theta = np.arctan2(r_y_new(t), r_x_new(t))
+                if new_theta > theta:
+                    print("right", time, t, actor, right[1], new_theta, theta)
+                    wait_time = t - time
+                    # print(time, t)
                     break
-    if wait_time>0:
-        plan.append(("wait", t))
+    if wait_time > 0:
+        plan.append(("wait", wait_time))
         plan.append(("achieve_goal", cam))
+    print(plan)
     return plan
 
+def achieve_goal(state, cam):
+    left, right = furthest(state)
+    print(left, right)
+    # left_s, right_s = largest_slopes(state)
+    plan = []
+    l_y = state.actors_y[left[1]]
+    l_x = state.actors_x[left[1]]
+    l_t = np.arctan2(l_y(0), l_x(0))
 
-def largest_slopes(state):
-    left = (None, -1)
-    right = (None, -1)
-    for actor in state.actors_t:
-        slope = (float(state.actors_t[actor].split("*")[0]))
-        if actor != left[1]:
-            if left[0] is None or slope < left[0]:
-                left = (slope, actor)
-        if actor != right[1]:
-            if right[0] is None or slope > right[0]:
-                right = (slope, actor)
-    return left, right
+    r_y = state.actors_y[right[1]]
+    r_x = state.actors_x[right[1]]
+    r_t = np.arctan2(r_y(0), r_x(0))
+
+    d_t = (l_t - r_t)
+
+    def fov(t, val=d_t):
+        return val
+
+    def angle(t, val=right[0]+(d_t/2)):
+        return val
+
+    print(fov(10), angle(10))
+    plan.append(('set_fov', cam, fov))
+    plan.append(('set_angle', cam, angle))
+    plan.append(('attach_next', state, cam))
+    return plan
 
 
 def furthest(state):
@@ -88,17 +165,14 @@ def furthest(state):
     right = (None, -1)
     t = state.time['time']
     for actor in state.actors_x:
-        print(actor)
-        print(state.actors_x[actor](t))
         loc_x = state.actors_x[actor](t)
         loc_y = state.actors_y[actor](t)
         loc_t = np.arctan2(loc_y, loc_x)
-        print(loc_x, loc_y, loc_t)
         if actor != left[1]:
-            if left[0] is None or loc_t < left[0]:
+            if left[0] is None or loc_t > left[0]:
                 left = (loc_t, actor)
         if actor != right[1]:
-            if right[0] is None or loc_t > right[0]:
+            if right[0] is None or loc_t < right[0]:
                 right = (loc_t, actor)
     return left, right
 
