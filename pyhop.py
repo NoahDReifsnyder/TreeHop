@@ -371,8 +371,7 @@ def seek_plan(state, tasks):
     if task1[0] in methods:
         relevant = methods[task1[0]]
         for method in relevant:
-            temp_state = copy.deepcopy(state)
-            sub_tasks = method(temp_state, *task1[1:])
+            sub_tasks = method(state, *task1[1:])
             # Can't just say "if sub_tasks:", because that's wrong if sub_tasks == []
             if sub_tasks is not False:
                 solution = seek_plan(state, sub_tasks+tasks[1:])
