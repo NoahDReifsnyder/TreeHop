@@ -2,6 +2,8 @@ import pyhop as treehop
 import numpy as np
 from PlotCamera import plot
 import inspect
+l_s = (0, None, None)
+r_s = (0, None, None)
 
 
 def init_fov(state, cam, theta, s_time):
@@ -31,7 +33,7 @@ def set_fov(state, cam, theta, s_time):
     old_fov = state.fov[cam]
 
     def new_fov(t):
-        return old_fov(t) + theta(t) - theta(s_time)
+        return old_fov(t) + theta(t)
 
     state.fov[cam] = new_fov
     return [state], preconditions
@@ -41,9 +43,9 @@ def end_fov(state, cam, theta, e_time, diff):
     preconditions = {}
     old_fov = state.fov[cam]
     s_time = e_time - diff
-
+    print(theta, l_s, r_s)
     def new_fov(t):
-        return old_fov(t) - theta(t-s_time) + theta(diff) - theta(s_time)
+        return old_fov(t) - theta(t) + theta(e_time)
 
     state.fov[cam] = new_fov
     state.time['time'] = e_time
@@ -55,7 +57,7 @@ def set_angle(state, cam, theta, s_time):
     old_angle = state.angle[cam]
 
     def new_angle(t):
-        return old_angle(t) + theta(t) - theta(s_time)
+        return old_angle(t) + theta(t)
 
     state.angle[cam] = new_angle
     return [state], preconditions
@@ -66,9 +68,9 @@ def end_angle(state, cam, theta, e_time, diff):
     old_angle = state.angle[cam]
     s_time = e_time - diff
     def new_angle(t):
-        return old_angle(t) - theta(t-s_time) + theta(diff) - theta(s_time)
+        return old_angle(t) - theta(t) + theta(e_time)
 
-    state.fov[cam] = new_angle
+    state.angle[cam] = new_angle
     state.time['time'] = e_time
     return [state], preconditions
 
@@ -82,6 +84,7 @@ treehop.declare_operators(wait, set_fov, set_angle, end_fov, end_angle, init_ang
 
 
 def attach_next(state, cam):
+    global l_s, r_s
     left, right = furthest(state)
     plan = []
     time = state.time['time']
@@ -89,6 +92,8 @@ def attach_next(state, cam):
     l_x = state.actors_x[left[1]]
     r_y = state.actors_y[right[1]]
     r_x = state.actors_x[right[1]]
+
+    print('huh', time)
 
     def l_t(new_time):
         return np.arctan2(l_y(new_time), l_x(new_time))
@@ -103,16 +108,17 @@ def attach_next(state, cam):
         return (l_t(new_time) - l_t(c_time)) / 2
 
     def d_r_t(new_time, c_time=time):
-        return r_t(new_time) - r_t(c_time)
+        return -1 * (r_t(new_time) - r_t(c_time))
 
     def d_r_angle(new_time, c_time=time):
-        return (r_t(new_time) - r_t(c_time)) / -2
+        return (r_t(new_time) - r_t(c_time)) / 2
 
     if not state.left[left[1]]:
         old = [x for x in state.left if state.left[x]]
         for actor in old:
             state.left[actor] = False
         state.left[left[1]] = True
+        l_s = (time, d_l_t, d_l_angle)
         plan.append(('set_fov', cam, d_l_t, time))
         plan.append(('set_angle', cam, d_l_angle, time))
 
@@ -121,15 +127,14 @@ def attach_next(state, cam):
         for actor in old:
             state.right[actor] = False
         state.right[right[1]] = True
+        r_s = (time, d_r_t, d_r_angle)
         plan.append(('set_fov', cam, d_r_t, time))
         plan.append(('set_angle', cam, d_r_angle, time))
     wait_time = 0
     for t in range(time, time + 100):
         if wait_time > 0:
             break
-        for actor in state.actors_x:
-            if wait_time > 0:
-                break
+        for actor in state.actors_x:  # make this better by finding max, not first
             if not actor == left[1]:
                 l_y_new = state.actors_y[actor]
                 l_x_new = state.actors_x[actor]
@@ -137,8 +142,13 @@ def attach_next(state, cam):
                 new_theta = np.arctan2(l_y_new(t), l_x_new(t))
                 if new_theta > theta:
                     wait_time = t - time
-                    plan.append(('end_fov', cam, d_l_t, t, wait_time))
-                    plan.append(('end_angle', cam, d_l_angle, t, wait_time))
+
+                    def diff(n_t, c_time=t):
+                        return l_t(c_time) - np.arctan2(state.actors_y[actor](c_time), state.actors_x[actor](c_time))
+
+                    print(diff(0))
+                    plan.append(('end_fov', cam, l_s[1], t, wait_time))
+                    plan.append(('end_angle', cam, l_s[2], t, wait_time))
             if not actor == right[1]:
                 r_y_new = state.actors_y[actor]
                 r_x_new = state.actors_x[actor]
@@ -146,8 +156,8 @@ def attach_next(state, cam):
                 new_theta = np.arctan2(r_y_new(t), r_x_new(t))
                 if new_theta < theta:
                     wait_time = t - time
-                    plan.append(('end_fov', cam, d_r_t, t, wait_time))
-                    plan.append(('end_angle', cam, d_r_angle, t, wait_time))
+                    plan.append(('end_fov', cam, r_s[1], t, wait_time))
+                    plan.append(('end_angle', cam, r_s[2], t, wait_time))
     if wait_time > 0:
         plan.append(("attach_next", cam))
     return plan

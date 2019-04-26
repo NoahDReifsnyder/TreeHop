@@ -2,17 +2,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 import inspect
+from time import sleep
 
 
 def plot(state, cam, c_time):
     ax = plt.subplot(111, projection='polar')
     ax.plot([0], [0], 'ro')
-    r = np.arange(0, 51, 50)
+    r = np.arange(0, 21, 20)
     o = np.ones(len(r))
     angle = state.angle[cam](c_time)
     fov = state.fov[cam](c_time)
-    print(fov, angle, state.angle[cam](10))
-    print(inspect.getsource(state.angle[cam]))
     fov_diff = fov/2
     theta = (angle - fov_diff) * o
     theta2 = (angle + fov_diff) * o
@@ -28,8 +27,7 @@ def plot(state, cam, c_time):
         y = state.actors_y[actor](c_time)
         r = math.sqrt(x**2 + y**2)
         theta = math.atan2(y, x)
-        ax.plot(theta, r, 'bo')
-        print(x, y, r, theta)
+        ax.plot(theta, r, 'bx')
 
     xT = plt.xticks()[0]
 
@@ -40,4 +38,4 @@ def plot(state, cam, c_time):
 
     ax.set_title("Radial Camera View", va='bottom')
     plt.show()
-    return ax
+    return
