@@ -30,8 +30,11 @@ def run(policy, state):
         while c_time < a_time:
             print(c_time, state.fov[cam](c_time))
 
-            plot(state, cam, c_time)
+            plot(state, cam, c_time, True)
             c_time += 1
         state = take_action(state, action)
         plot(state, cam, c_time)
+    for i in range(1, 100):
+        t = state.time['time'] + i
+        plot(state, cam, t, True)
     return

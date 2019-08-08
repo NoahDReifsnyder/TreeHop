@@ -43,7 +43,6 @@ def end_fov(state, cam, theta, e_time, diff):
     preconditions = {}
     old_fov = state.fov[cam]
     s_time = e_time - diff
-    print(theta, l_s, r_s)
     def new_fov(t):
         return old_fov(t) - theta(t) + theta(e_time)
 
@@ -93,7 +92,6 @@ def attach_next(state, cam):
     r_y = state.actors_y[right[1]]
     r_x = state.actors_x[right[1]]
 
-    print('huh', time)
 
     def l_t(new_time):
         return np.arctan2(l_y(new_time), l_x(new_time))
@@ -133,6 +131,7 @@ def attach_next(state, cam):
     wait_time = 0
     for t in range(time, time + 100):
         if wait_time > 0:
+            plan.append(('attach_next', cam))
             break
         for actor in state.actors_x:  # make this better by finding max, not first
             if not actor == left[1]:
@@ -143,12 +142,25 @@ def attach_next(state, cam):
                 if new_theta > theta:
                     wait_time = t - time
 
-                    def diff(n_t, c_time=t):
-                        return l_t(c_time) - np.arctan2(state.actors_y[actor](c_time), state.actors_x[actor](c_time))
+                    def diff(n_t, actor=actor, t=t):
+                        l_y_new = state.actors_y[actor]
+                        l_x_new = state.actors_x[actor]
+                        theta = l_t(t)
+                        new_theta = np.arctan2(l_y_new(t), l_x_new(t))
+                        return -theta + new_theta
 
-                    print(diff(0))
+                    def diff_a(n_t, actor=actor, t=t):
+                        l_y_new = state.actors_y[actor]
+                        l_x_new = state.actors_x[actor]
+                        theta = l_t(t)
+                        new_theta = np.arctan2(l_y_new(t), l_x_new(t))
+                        d = new_theta - theta
+                        return d/2
+
                     plan.append(('end_fov', cam, l_s[1], t, wait_time))
+                    plan.append(('init_fov', cam, diff, t))
                     plan.append(('end_angle', cam, l_s[2], t, wait_time))
+                    plan.append(('init_angle', cam, diff_a, t))
             if not actor == right[1]:
                 r_y_new = state.actors_y[actor]
                 r_x_new = state.actors_x[actor]
@@ -156,12 +168,27 @@ def attach_next(state, cam):
                 new_theta = np.arctan2(r_y_new(t), r_x_new(t))
                 if new_theta < theta:
                     wait_time = t - time
-                    plan.append(('end_fov', cam, r_s[1], t, wait_time))
-                    plan.append(('end_angle', cam, r_s[2], t, wait_time))
-    if wait_time > 0:
-        plan.append(("attach_next", cam))
-    return plan
 
+                    def diff(n_t, actor=actor, t=t):
+                        r_y_new = state.actors_y[actor]
+                        r_x_new = state.actors_x[actor]
+                        theta = r_t(t)
+                        new_theta = np.arctan2(r_y_new(t), r_x_new(t))
+                        return theta - new_theta
+
+                    def diff_a(n_t, actor=actor, t=t):
+                        r_y_new = state.actors_y[actor]
+                        r_x_new = state.actors_x[actor]
+                        theta = r_t(t)
+                        new_theta = np.arctan2(r_y_new(t), r_x_new(t))
+                        d = new_theta - theta
+                        return d/2
+
+                    plan.append(('end_fov', cam, r_s[1], t, wait_time))
+                    plan.append(('init_fov', cam, diff, t))
+                    plan.append(('end_angle', cam, r_s[2], t, wait_time))
+                    plan.append(('init_angle', cam, diff_a, t))
+    return plan
 
 def achieve_goal(state, cam):
     left, right = furthest(state)

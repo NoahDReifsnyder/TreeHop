@@ -22,7 +22,7 @@ def collect_block(state, agent, block):
         else:
             state.on[block] = None
         state.top_acquired[block] = True
-        state.collected[block] = True
+        state.collected[agent] += 1
         return [state], preconditions
     else:
         return False

@@ -447,7 +447,7 @@ def print_exp(policy):
         print()
 
 
-def gen_expectations(policy, starting_state):
+def gen_expectations(policy, starting_state, goal_set):
     graph = Graph(starting_state, policy)
     #print("finished graph")
     #graph.print()

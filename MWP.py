@@ -67,7 +67,9 @@ def run():
     goals = [('light_all', 'Agent1', n)]
     treehop.declare_goals(goals)
     policy = treehop.pyhop_t(state, original_call=True)
-    # treehop.print_policy(policy, state)
-    # treehop.print_state(state)
+    treehop.print_policy(policy, state)
     gen_expectations(policy, state)
+    print(policy[state].expectations.regression)
+    print('here')
 
+run()

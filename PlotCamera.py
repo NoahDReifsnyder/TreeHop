@@ -3,13 +3,17 @@ import numpy as np
 import math
 import inspect
 from time import sleep
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='polar')
+ax.plot([0], [0], 'ro')
+plt.show(block=False)
+rad = 20
 
-
-def plot(state, cam, c_time):
-    ax = plt.subplot(111, projection='polar')
-    ax.plot([0], [0], 'ro')
-    r = np.arange(0, 21, 20)
+def plot(state, cam, c_time, wait=False):
+    global ax, rad
+    r = np.arange(0, rad + 1, rad)
     o = np.ones(len(r))
+    ax.clear()
     angle = state.angle[cam](c_time)
     fov = state.fov[cam](c_time)
     fov_diff = fov/2
@@ -19,13 +23,15 @@ def plot(state, cam, c_time):
     #theta2 = -np.pi/3 * o
     ax.plot(theta, r)
     ax.plot(theta2, r)
-    ax.set_rmax(20)
+    ax.set_rmax(rad)
     ax.set_rlabel_position(-22.5)  # get radial labels away from plotted line
 
     for actor in state.actors_x:
         x = state.actors_x[actor](c_time)
         y = state.actors_y[actor](c_time)
         r = math.sqrt(x**2 + y**2)
+        if r > rad:
+            rad = r
         theta = math.atan2(y, x)
         ax.plot(theta, r, 'bx')
 
@@ -37,5 +43,6 @@ def plot(state, cam, c_time):
     ax.grid(True)
 
     ax.set_title("Radial Camera View", va='bottom')
-    plt.show()
+    if wait:
+        plt.pause(.1)
     return

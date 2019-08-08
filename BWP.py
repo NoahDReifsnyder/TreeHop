@@ -10,15 +10,14 @@ def run():
     agent = 'Agent1'
     state = treehop.State('state')
     state.weights = {}
-    treehop.declare_numeric('weights')
     state.acquired = {agent: (0, 0)}
-    treehop.declare_numeric('acquired')
     state.under = {}
     state.on = {}
     state.top = {}
     state.top_acquired = {}
-    state.collected = {}
+    state.collected = {agent: 0}
     top_list = Queue()
+    goal_set = {}  # goals for goal regression
     for i in range(0, 3):
         top_list.put(None)
     n = 500
@@ -35,12 +34,13 @@ def run():
         state.weights[i] = (temp - variance, temp + variance)
         state.top[i] = False
         state.top_acquired[i] = False
-        state.collected[i] = False
     while not top_list.empty():
         i = top_list.get()
         state.top[i] = True
     goals = [('achieve_goal', agent, collection_weight)]
     treehop.declare_goals(goals)
     policy = treehop.pyhop_t(state, goals, True)
-    #treehop.print_policy(policy, state)
-    gen_expectations(policy, state)
+    treehop.print_policy(policy, state)
+    gen_expectations(policy, state, goal_set)
+
+run()
