@@ -340,6 +340,7 @@ def seek_plan(state, tasks):
         first_state = new_states[0]
         preconditions = op_return[1]
         action = Action(name=task1, state=state)
+        print(state)
         Policy[state] = action
         action.preconditions = preconditions
         children = []
