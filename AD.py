@@ -6,7 +6,7 @@ import random
 def prec(state, pre):
     for d in pre:
         for key in pre[d]:
-            if not state[d][key] == pre[d][key]:
+            if not getattr(state, d)[key] == pre[d][key]:
                 return False
     return True
 
@@ -16,18 +16,17 @@ def stack(state, a, b):
     if prec(state, preconditions):
         state1 = copy.deepcopy(state)
         state2 = copy.deepcopy(state)
-        for key in state1:
-            if a in state1[key]:
-                del(state1[key][a])
-        state1['floor'][a] = True
-        if a in state2['on']:
-            state2['clear'][state['on'][a]] = True
-            del(state2['on'][a])
-        state2['clear'][b] = False
-        state2['on'][a] = b
-        state2['clear'][b] = False
+        if a in state1.on:
+            del(state1.on[a])
+        del(state1.clear[a])
+        state1.floor[a] = True
+        if a in state2.on:
+            del(state2.on[a])
+        state2.clear[b] = False
+        state2.on[a] = b
+        state2.clear[b] = False
         retval = [(state1, .1), (state2, .9)]
-        return [state1, state2], preconditions
+        return [state2, state1], preconditions
         pass
     else:
         return False
@@ -44,7 +43,7 @@ def unstack(state, a, b):
         state1['floor'][a] = True
         del(state2['on'][a])
         state2['clear'][b] = True
-        return [state1, state2], preconditions
+        return [state2, state1], preconditions
     else:
         return False
     pass
@@ -56,12 +55,12 @@ def tallest(state):
     block = None
     height = 0
     cbs = []
-    blocks = [b for b in state['clear'] if state['clear'][b]]
+    blocks = [b for b in state.clear if state.clear[b]]
     for b in blocks:
         temp = b
         t_height = 1
-        while temp in state['on']:
-            temp = state['on'][temp]
+        while temp in state.on:
+            temp = state.on[temp]
             t_height += 1
         if t_height > height:
             height = t_height
@@ -72,11 +71,16 @@ def tallest(state):
 def achieve_goal(state, n):  # goal is tower of n blocks
     plan = []
     block, height = tallest(state)
-    useable = [b for b in state['clear'] if state['clear'][b]]
+    if height >= n:
+        return []
+    useable = [b for b in state.clear if state.clear[b]]
     useable.remove(block)
-    new = random.choice(useable)
-    plan = [('stack', new, block), ('achieve_goal', n)]
-    return plan
+    if len(useable) > (n - height):
+        new = random.choice(useable)
+        plan = [('stack', new, block), ('achieve_goal', n)]
+        return plan
+    else:
+        return False
 
 
 treehop.declare_methods('achieve_goal', achieve_goal)

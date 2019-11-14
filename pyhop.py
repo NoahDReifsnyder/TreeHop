@@ -200,15 +200,18 @@ def print_goal(goal, indent=4):
 
 
 def print_policy(policy, state, depth=list(), tracker=list()):  # Needs work,incorrect
+    print_state(state)
     if state not in policy:
         for x in depth:
             print(str(x) + " ", end="")
-        print("Goal", end="\n\n\n")
+        if not state:
+            print("T", end="\n")
+        else:
+            print("Goal", end="\n")
         return
     if state in tracker:
         for x in depth:
             print(str(x) + " ", end="")
-        print(tracker.index(state))
         return
     tracker.append(state)
     action = policy[state]
@@ -340,7 +343,6 @@ def seek_plan(state, tasks):
         first_state = new_states[0]
         preconditions = op_return[1]
         action = Action(name=task1, state=state)
-        print(state)
         Policy[state] = action
         action.preconditions = preconditions
         children = []
@@ -360,15 +362,18 @@ def seek_plan(state, tasks):
                     if solution is not False:
                         children.append(new_state)
                         action.effects[new_state] = new_state.get_diff(state)
+                    else:
+                        children.append(False)
                 else:
                     result = pyhop_t(new_state, goals)
                     if result:
                         children.append(new_state)
                         action.effects[new_state] = new_state.get_diff(state)
         action.children = children
-        if len(new_states) > 0:
-            if solution is not False:
-                return True
+        return True
+        #if len(new_states) > 0:
+        #    if solution is not False:
+        #        return True
     if task1[0] in methods:
         relevant = methods[task1[0]]
         for method in relevant:
